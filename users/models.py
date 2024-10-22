@@ -40,7 +40,7 @@ class CustomerUser(AbstractUser):
 
     username = models.CharField(blank=True, max_length=20)
     email = models.EmailField(unique=True)
-    balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=11)
+    balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=11, serialize=True)
     rating = models.IntegerField(
         'Оценка',
         # blank=True,
@@ -50,21 +50,6 @@ class CustomerUser(AbstractUser):
     )
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
-
-    # Добавляем related_name для избегания конфликтов
-    groups = models.ManyToManyField(
-        'auth.Group',
-        related_name='customeruser_set',
-        blank=True,
-        help_text='The groups this user belongs to.'
-    )
-
-    user_permissions = models.ManyToManyField(
-        'auth.Permission',
-        related_name='customeruser_permissions_set',
-        blank=True,
-        help_text='Specific permissions for this user.'
-    )
 
     def __str__(self):
         return self.email
@@ -95,16 +80,3 @@ class BalanceHistory(models.Model):
     new_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=11)
     create_time = models.DateTimeField(auto_now_add=True)
 
-
-class GlobalMessage(models.Model):
-    text = models.TextField("Текст сообщения")
-    is_active = models.BooleanField("Активное", default=True)
-    created_at = models.DateTimeField("Дата создания", auto_now_add=True)
-    updated_at = models.DateTimeField("Дата обновления", auto_now=True)
-
-    def __str__(self):
-        return self.text
-
-    class Meta:
-        verbose_name = "Глобальное сообщение"
-        verbose_name_plural = "Глобальные сообщения"
