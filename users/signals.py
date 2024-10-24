@@ -1,7 +1,8 @@
 from django.contrib.auth.models import Group, Permission
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
-
+from django.contrib.auth.models import Permission
+print(Permission.objects.all().values_list('codename', flat=True))
 
 @receiver(post_migrate)
 def create_managers_group(sender, **kwargs):
