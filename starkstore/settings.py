@@ -84,7 +84,7 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': '/path/to/your/django/debug.log',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),  # Измените путь
         },
     },
     'loggers': {
