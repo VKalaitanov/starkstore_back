@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'orders.apps.OrdersConfig',
     'users.apps.UsersConfig',
     'services.apps.ServicesConfig',
-    'data_collector.apps.DataCollectorConfig'
+    # 'data_collector.apps.DataCollectorConfig'
 ]
 
 MIDDLEWARE = [
