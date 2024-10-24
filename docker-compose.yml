@@ -18,7 +18,7 @@ services:
       - .env
     volumes:
       - ./:/app
-      - static:/app/staticfiles
+      - static:/app/static
       - media:/app/media
     depends_on:
       postgres:
@@ -35,7 +35,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - static:/app/staticfiles
+      - static:/app/static
       - media:/app/media
       - ./nginx/:/etc/nginx/conf.d:ro
     depends_on:
