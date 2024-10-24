@@ -18,7 +18,7 @@ services:
       - .env
     volumes:
       - ./:/app
-      - static:/app/static
+      - static:/app/staticfiles
       - media:/app/media
     depends_on:
       postgres:
@@ -34,9 +34,8 @@ services:
     restart: always
     ports:
       - "80:80"
-      - "443:443"
     volumes:
-      - static:/app/static
+      - static:/app/staticfiles
       - media:/app/media
       - ./nginx/:/etc/nginx/conf.d:ro
     depends_on:
