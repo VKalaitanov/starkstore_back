@@ -20,7 +20,7 @@ class ServiceOption(models.Model):
 
     category = models.CharField(max_length=255, verbose_name="Категория")  # Например, "Followers" или "Likes"
 
-    price_per_unit = MoneyField(max_digits=10, decimal_places=2,
+    price_per_unit = MoneyField(max_digits=15, decimal_places=2,
                                 verbose_name='Цена', default=0,
                                 default_currency="USD")
     discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="Скидка (%)")

@@ -42,7 +42,7 @@ class CustomerUser(AbstractUser):
 
     username = models.CharField(blank=True, max_length=20)
     email = models.EmailField(unique=True)
-    balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=11, serialize=True)
+    balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15, serialize=True)
     rating = models.IntegerField(
         'Оценка',
         # blank=True,
@@ -59,6 +59,7 @@ class CustomerUser(AbstractUser):
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи(email, баланс...)"
+        ordering = ['email']
 
     objects = CustomerUserManager()
 
@@ -99,7 +100,7 @@ class ReplenishmentBalance(models.Model):
         COMPLETED = 'completed'
 
     user = models.ForeignKey(CustomerUser, on_delete=models.CASCADE, related_name='replenishment')
-    balance_for_replenishment = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=11,
+    balance_for_replenishment = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15,
                                            verbose_name="Сумма пополнения")
     email = models.EmailField(max_length=255, verbose_name="E-mail для связи")
     status = models.CharField(max_length=50, choices=ChoicesStatus.choices, default=ChoicesStatus.PENDING,
@@ -115,6 +116,6 @@ class ReplenishmentBalance(models.Model):
 
 class BalanceHistory(models.Model):
     user = models.ForeignKey('CustomerUser', on_delete=models.CASCADE, related_name='balance_history')
-    old_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=11)
-    new_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=11)
+    old_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
+    new_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
     create_time = models.DateTimeField(auto_now_add=True)
