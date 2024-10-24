@@ -1,8 +1,8 @@
 from django.contrib.auth.models import Group, Permission
 from django.db.models.signals import post_migrate
+from django.db.utils import OperationalError
 from django.dispatch import receiver
-from django.contrib.auth.models import Permission
-print(Permission.objects.all().values_list('codename', flat=True))
+
 
 @receiver(post_migrate)
 def create_managers_group(sender, **kwargs):
@@ -16,9 +16,15 @@ def create_managers_group(sender, **kwargs):
                 'chat.view_room',
             ]
             for perm in permissions:
-                permission = Permission.objects.get(codename=perm.split('.')[1])  # Извлекаем имя права
-                managers_group.permissions.add(permission)
+                try:
+                    permission = Permission.objects.get(codename=perm.split('.')[1])  # Извлекаем имя права
+                    managers_group.permissions.add(permission)
+                except OperationalError:
+                    print("Ошибка доступа к базе данных.")
+                except Permission.DoesNotExist:
+                    print(f"Право {perm} не существует.")
             else:
                 print("Создана новая 'Группа Менеджеры'.")
         else:
             print("'Группа Менеджеры' уже существует.")
+
