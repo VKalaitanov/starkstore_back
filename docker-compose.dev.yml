@@ -1,0 +1,81 @@
+version: "3.10"
+
+volumes:
+  pgdata:
+  static:
+  media:
+  backups:  # Хранилище для бэкапов базы данных
+  redisdata:
+
+services:
+  django:
+    build:
+      context: .
+    ports:
+      - '8000:8000'
+    container_name: service_django
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - static:/app/static
+      - media:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "python manage.py collectstatic --no-input && \
+                    python manage.py makemigrations && \
+                    python manage.py migrate && \
+                    gunicorn --workers=4 --reload --max-requests=1000 starkstore.wsgi -b 0.0.0.0:8000"
+
+  nginx:
+    container_name: service_nginx
+    image: nginx:stable-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static:/app/static
+      - media:/app/media
+      - ./nginx/:/etc/nginx/conf.d:ro
+    depends_on:
+      - django
+
+  postgres:
+    image: postgres:alpine
+    container_name: service_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: service_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Сервис для бэкапов
+  backup:
+    image: postgres:alpine
+    container_name: service_postgres_backup
+    volumes:
+      - ./backups:/backups  # Монтируем локальную директорию для хранения бэкапов
+    depends_on:
+      - postgres
+    entrypoint: /bin/sh -c "crontab -l | { cat; echo '0 7 * * * PGPASSWORD=${POSTGRES_PASSWORD} pg_dump -h postgres -U postgres service_db > /backups/service_db_$(date +\%Y-\%m-\%d_\%H-\%M-\%S).sql'; echo '0 8 * * * find /backups/* -mtime +30 -exec rm {} \\;'; } | crontab - && crond -f"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+
+  redis:
+    image: redis:alpine
+    container_name: service_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data

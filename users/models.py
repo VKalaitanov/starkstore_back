@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import BaseUserManager
 from djmoney.models.fields import MoneyField
+from services.models import ServiceOption
 
 
 class CustomerUserManager(BaseUserManager):
@@ -31,6 +32,7 @@ class CustomerUserManager(BaseUserManager):
 
 class CustomerUser(AbstractUser):
     """Кастомная сущность пользователя"""
+
     class RatingChoice(models.IntegerChoices):
         one = 1, '★☆☆☆☆'
         two = 2, '★★☆☆☆'
@@ -65,7 +67,7 @@ class CustomerUser(AbstractUser):
             old_balance = CustomerUser.objects.get(pk=self.pk).balance
             if old_balance != self.balance:
                 # Записываем изменения в историю
-                BalanceHistory.objects.create(
+                BalanceHistory.objects.create(  # type: ignore
                     user=self,
                     old_balance=old_balance,
                     new_balance=self.balance,
@@ -74,9 +76,45 @@ class CustomerUser(AbstractUser):
         super().save(*args, **kwargs)
 
 
+class UserServiceDiscount(models.Model):
+    """Модель для хранения индивидуальных скидок пользователя на определённые услуги"""
+    user = models.ForeignKey(CustomerUser, on_delete=models.CASCADE, related_name="service_discounts")
+    service_option = models.ForeignKey(ServiceOption, on_delete=models.CASCADE, related_name="user_discounts")
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0,
+                                              verbose_name="Индивидуальная скидка (%)")
+
+    class Meta:
+        verbose_name = "Индивидуальная скидка пользователя"
+        verbose_name_plural = "Индивидуальные скидки пользователей"
+        unique_together = ('user', 'service_option')
+
+    def __str__(self):
+        return f"Скидка {self.discount_percentage}% для {self.user} на {self.service_option}"
+
+
+class ReplenishmentBalance(models.Model):
+    class ChoicesStatus(models.Choices):
+        PENDING = 'pending'
+        RUNNING = 'running'
+        COMPLETED = 'completed'
+
+    user = models.ForeignKey(CustomerUser, on_delete=models.CASCADE, related_name='replenishment')
+    balance_for_replenishment = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=11,
+                                           verbose_name="Сумма пополнения")
+    email = models.EmailField(max_length=255, verbose_name="E-mail для связи")
+    status = models.CharField(max_length=50, choices=ChoicesStatus.choices, default=ChoicesStatus.PENDING,
+                              verbose_name="Статус заказа")
+
+    def __str__(self):
+        return f"User - {self.email}, balance - {self.balance_for_replenishment}"
+
+    class Meta:
+        verbose_name = 'Заказ на пополнение баланса'
+        verbose_name_plural = 'Заказы на пополнение баланса'
+
+
 class BalanceHistory(models.Model):
     user = models.ForeignKey('CustomerUser', on_delete=models.CASCADE, related_name='balance_history')
     old_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=11)
     new_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=11)
     create_time = models.DateTimeField(auto_now_add=True)
-

@@ -38,4 +38,7 @@ class ControlBalance:
         if value.balance < total_price:
             raise serializers.ValidationError("У вас недостаточно средств для совершения покупки")
 
+        value.balance -= total_price
+        value.save()
+
         return value

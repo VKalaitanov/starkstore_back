@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from orders.models import Order
+from users.models import ReplenishmentBalance
 from .validators import ControlBalance
 
 
@@ -36,4 +37,16 @@ class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
             'quantity',
             'period',
             'notes',
+        ]
+
+
+class ReplenishmentBalanceCreateSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = ReplenishmentBalance
+        fields = [
+            'user',
+            'balance_for_replenishment',
+            'email'
         ]

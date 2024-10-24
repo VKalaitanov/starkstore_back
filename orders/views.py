@@ -1,6 +1,8 @@
 from rest_framework.generics import ListAPIView, CreateAPIView
+
+from users.models import ReplenishmentBalance
 from .models import Order
-from .serializers import OrderGetAllSerializer, OrderCreateSerializer
+from .serializers import OrderGetAllSerializer, OrderCreateSerializer, ReplenishmentBalanceCreateSerializer
 
 
 class OrderGetAllView(ListAPIView):
@@ -15,3 +17,8 @@ class OrderGetAllView(ListAPIView):
 class OrderCreateView(CreateAPIView):
     serializer_class = OrderCreateSerializer
     queryset = Order
+
+
+class ReplenishmentBalanceCreateView(CreateAPIView):
+    serializer_class = ReplenishmentBalanceCreateSerializer
+    queryset = ReplenishmentBalance
