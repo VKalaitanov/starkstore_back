@@ -47,7 +47,7 @@ services:
     container_name: service_postgres
     restart: always
     environment:
-      POSTGRES_DB: service_db
+      POSTGRES_DB: ${POSTGRES_DB}  # Теперь база будет 'starkstore_db' из файла .env
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
