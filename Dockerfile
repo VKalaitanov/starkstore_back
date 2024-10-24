@@ -3,26 +3,29 @@ FROM python:3.10-alpine
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Устанавливаем обновления и необходимые модули
-RUN apk update && apk add libpq
-RUN apk add --virtual .build-deps gcc python3-dev musl-dev postgresql-dev
+# Устанавливаем необходимые зависимости
+RUN apk update && apk add --no-cache \
+    libpq \
+    gcc \
+    python3-dev \
+    musl-dev \
+    postgresql-dev \
+    bash  # Для поддержки bash
 
 # Обновление pip python
 RUN pip install --upgrade pip
 
-# Установка пакетов для проекта
+# Установка зависимостей проекта
 COPY requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 
 WORKDIR /app
 
-# Удаляем зависимости билда
-RUN apk del .build-deps
-
 # Копирование проекта
 COPY . .
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "starkstore.wsgi:application"]
-
-# Настройка записи и доступа
+# Настройка прав доступа
 RUN chmod -R 777 ./
+
+# Команда для запуска сервера Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "starkstore.wsgi:application"]
