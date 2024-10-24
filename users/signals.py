@@ -4,6 +4,25 @@ from django.db.utils import OperationalError
 from django.dispatch import receiver
 
 
+# @receiver(post_migrate)
+# def create_managers_group(sender, **kwargs):
+#     if sender.name == 'users':
+#         managers_group, created = Group.objects.get_or_create(name='Менеджеры')
+#
+#         if created:
+#             permissions = [
+#                 'chat.add_message',
+#                 'chat.view_message',
+#                 'chat.view_room',
+#             ]
+#             for perm in permissions:
+#                 permission = Permission.objects.get(codename=perm.split('.')[1])  # Извлекаем имя права
+#                 managers_group.permissions.add(permission)
+#             else:
+#                 print("Создана новая 'Группа Менеджеры'.")
+#         else:
+#             print("'Группа Менеджеры' уже существует.")
+
 @receiver(post_migrate)
 def create_managers_group(sender, **kwargs):
     if sender.name == 'users':
@@ -27,4 +46,3 @@ def create_managers_group(sender, **kwargs):
                 print("Создана новая 'Группа Менеджеры'.")
         else:
             print("'Группа Менеджеры' уже существует.")
-
