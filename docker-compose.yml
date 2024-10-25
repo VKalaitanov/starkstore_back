@@ -37,7 +37,8 @@ services:
     volumes:
       - static:/app/static
       - media:/app/media
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro  # подключаем как основной конфиг
+      - /dev/null:/etc/nginx/conf.d/default.conf:ro  # удаляем стандартный конфиг
 
     depends_on:
       - django
