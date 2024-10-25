@@ -15,3 +15,4 @@ psycopg2-binary==2.9.9
 django-money==3.5.3
 djoser==2.2.3
 gunicorn
+drf-yasg==1.21.8

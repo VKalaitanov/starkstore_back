@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'djoser',
     'djmoney',
     'corsheaders',
+    'drf_yasg',
     'orders.apps.OrdersConfig',
     'users.apps.UsersConfig',
     'services.apps.ServicesConfig',
