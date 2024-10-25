@@ -23,9 +23,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: sh -c "python manage.py migrate && \
+    command: sh -c "python manage.py makemigrations && \
+             python manage.py migrate && \
              python manage.py collectstatic --no-input && \
-             python manage.py makemigrations && \
              gunicorn --workers=4 --reload --max-requests=1000 starkstore.wsgi -b 0.0.0.0:8000"
 
   nginx:
@@ -37,7 +37,8 @@ services:
     volumes:
       - static:/app/static
       - media:/app/media
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx.conf:/etc/nginx/conf.d:ro
+
     depends_on:
       - django
 
