@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'axes',
+    # 'axes',
     'rest_framework',
     'rest_framework_simplejwt',
     'djoser',
@@ -210,15 +210,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-DJOSER = {
-    'SEND_ACTIVATION_EMAIL': True,
-    'ACTIVATION_URL': 'activate/{uid}/{token}/',
-    'USER_CREATE_PASSWORD_RETYPE': True,
-    'SERIALIZERS': {
-        'current_user': 'users.serializers.ProfileSerializer',
-        'user_create_password_retype': 'users.serializers.CustomUserCreateSerializer'
-    },
-}
 
 SIMPLE_JWT = {  # settings jwt-tokens
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
