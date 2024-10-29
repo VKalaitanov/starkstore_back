@@ -17,7 +17,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
+
 
 ALLOWED_HOSTS = ['*']
 INTERNAL_IPS = ["127.0.0.1", '31.129.102.58']
@@ -40,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'axes',
     'rest_framework',
     'rest_framework_simplejwt',
     'djoser',
@@ -61,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'starkstore.urls'
@@ -236,6 +239,12 @@ SIMPLE_JWT = {  # settings jwt-tokens
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
 
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend'
+]
+
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = env('EMAIL_HOST')
 EMAIL_PORT = env('EMAIL_PORT')
@@ -257,3 +266,11 @@ DJOSER = {
         'user_create_password_retype': 'users.serializers.CustomUserCreateSerializer'
     },
 }
+
+
+AXES_FAILURE_LIMIT = 5  # число попыток для входа
+AXES_COOLOFF_TIME = 2  # блок на 2 часа
+ATOMIC_REQUESTS = True
+AXES_LOCK_OUT_BY_USER_ONLY = True
+AXES_ONLY_USER_FAILURES = False  # Позволяет блокировать по IP, если неправильно введены данные
+AXES_COOLOFF_MESSAGE = ["Your IP blocked for an two hours"]
