@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'axes',
+    'axes',
     'rest_framework',
     'rest_framework_simplejwt',
     'djoser',
@@ -77,7 +77,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'axes.middleware.AxesMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'starkstore.urls'
@@ -283,9 +283,9 @@ DJOSER = {
 }
 
 
-# AXES_FAILURE_LIMIT = 5  # число попыток для входа
-# AXES_COOLOFF_TIME = 2  # блок на 2 часа
-# ATOMIC_REQUESTS = True
-# AXES_LOCK_OUT_BY_USER_ONLY = True
-# AXES_ONLY_USER_FAILURES = False  # Позволяет блокировать по IP, если неправильно введены данные
-# AXES_COOLOFF_MESSAGE = ["Your IP blocked for an two hours"]
+AXES_FAILURE_LIMIT = 5  # число попыток для входа
+AXES_COOLOFF_TIME = 0.01  # блок на 2 часа
+ATOMIC_REQUESTS = True
+AXES_LOCK_OUT_BY_USER_ONLY = True
+AXES_ONLY_USER_FAILURES = False  # Позволяет блокировать по IP, если неправильно введены данные
+AXES_COOLOFF_MESSAGE = ["Your IP blocked for an two hours"]
