@@ -28,6 +28,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3001",  # URL вашего фронтенд-приложения
+    "http://31.129.102.58",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
