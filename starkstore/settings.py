@@ -210,6 +210,16 @@ REST_FRAMEWORK = {
     ]
 }
 
+DJOSER = {
+    'SEND_ACTIVATION_EMAIL': True,
+    'ACTIVATION_URL': 'activate/{uid}/{token}/',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+    'SERIALIZERS': {
+        'current_user': 'users.serializers.ProfileSerializer',
+        'user_create_password_retype': 'users.serializers.CustomUserCreateSerializer'
+    },
+}
+
 SIMPLE_JWT = {  # settings jwt-tokens
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
@@ -226,7 +236,7 @@ SIMPLE_JWT = {  # settings jwt-tokens
     "JWK_URL": None,
     "LEEWAY": 0,
 
-    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_TYPES": ("token-jwt",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
