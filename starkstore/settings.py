@@ -292,9 +292,9 @@ DJOSER = {
 }
 
 
-AXES_FAILURE_LIMIT = 5  # число попыток для входа
-AXES_COOLOFF_TIME = 2  # блок на 2 часа
-ATOMIC_REQUESTS = True
-AXES_LOCK_OUT_BY_USER_ONLY = True
+# AXES_FAILURE_LIMIT = 5  # число попыток для входа
+# AXES_COOLOFF_TIME = 2  # блок на 2 часа
+# ATOMIC_REQUESTS = True
+# AXES_LOCK_OUT_BY_USER_ONLY = True
 # AXES_ONLY_USER_FAILURES = False  # Позволяет блокировать по IP, если неправильно введены данные
-AXES_COOLOFF_MESSAGE = ["Your IP blocked for an two hours"]
+# AXES_COOLOFF_MESSAGE = ["Your IP blocked for an two hours"]
