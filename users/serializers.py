@@ -43,7 +43,7 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
     def send_confirmation_email(self, user):
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        confirmation_link = f"{settings.FRONTEND_URL}/confirm-email/?uid={uid}&token={token}"
+        confirmation_link = f"{settings.FRONTEND_URL}/{uid}/{token}"
 
         subject = 'Подтверждение электронной почты'
         message = f'Пожалуйста, подтвердите свою электронную почту, перейдя по следующей ссылке: {confirmation_link}'
