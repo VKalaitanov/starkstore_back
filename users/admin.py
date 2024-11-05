@@ -104,10 +104,10 @@ class AdminCustomerUser(admin.ModelAdmin):
         return format_html(table_html)
 
     def has_add_permission(self, request):
-        return False
+        return True
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return True
 
 
 @admin.register(UserServiceDiscount)

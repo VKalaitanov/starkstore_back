@@ -24,6 +24,12 @@ ALLOWED_HOSTS = ['*']
 INTERNAL_IPS = ["127.0.0.1", '31.129.102.58']
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# AXES_FAILURE_LIMIT = 5  # число попыток для входа
+# AXES_COOLOFF_TIME = 0.01  # блок на 2 часа
+# ATOMIC_REQUESTS = True
+# AXES_LOCK_OUT_BY_USER_ONLY = True
+# AXES_COOLOFF_MESSAGE = ["Your IP blocked for an two hours"]
+
 # Application definition
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
@@ -55,7 +61,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'axes',
+    # 'axes',
     'rest_framework',
     'rest_framework_simplejwt',
     'djoser',
@@ -77,7 +83,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'axes.middleware.AxesMiddleware',
+    # 'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'starkstore.urls'
@@ -186,30 +192,19 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
 }
 
-
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,
-    "AUTH_HEADER_TYPES": ("Bearer",),
-    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-    "TOKEN_TYPE_CLAIM": "token_type",
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
 MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
 
 AUTHENTICATION_BACKENDS = [
-    'axes.backends.AxesStandaloneBackend',
+    # 'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend'
 ]
 
@@ -225,6 +220,7 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 EMAIL_SERVER = EMAIL_HOST_USER
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_ADMIN = list(EMAIL_HOST_USER)
+FRONTEND_URL = 'http://31.129.102.58:3001/api/v1/users'
 
 DJOSER = {
     'SEND_ACTIVATION_EMAIL': True,
@@ -237,9 +233,4 @@ DJOSER = {
 }
 
 
-AXES_FAILURE_LIMIT = 5  # число попыток для входа
-AXES_COOLOFF_TIME = 0.01  # блок на 2 часа
-ATOMIC_REQUESTS = True
-AXES_LOCK_OUT_BY_USER_ONLY = True
-AXES_ONLY_USER_FAILURES = False  # Позволяет блокировать по IP, если неправильно введены данные
-AXES_COOLOFF_MESSAGE = ["Your IP blocked for an two hours"]
+

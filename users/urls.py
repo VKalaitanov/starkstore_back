@@ -1,7 +1,9 @@
-from django.urls import path, include
+from django.urls import path
+from . import views
+
 
 urlpatterns = [
-
-    path('api-auth/', include('rest_framework.urls')),
-    #  api-auth ДОБАВЛЕНО НА ВРЕМЯ ДЛЯ ЛОКАЛКИ => in end_url /login/ or  /logout/
+    path('register/', views.RegisterView.as_view(), name='register'),
+    path('login/', views.LoginView.as_view(), name='login'),
+    path('confirm-email/', views.confirm_email, name='confirm_email'),
 ]
