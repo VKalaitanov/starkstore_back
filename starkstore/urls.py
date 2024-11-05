@@ -9,7 +9,7 @@ urlpatterns = [
     path('api/v1/users/', include('users.urls')),
     path('api/v1/order/', include('orders.urls')),
     path('api/v1/service/', include('services.urls')),
-    path('activate/', confirm_email, name='confirm_email')
+    path('api/activate/', confirm_email, name='confirm_email')
 ]
 
 urlpatterns += doc_url
