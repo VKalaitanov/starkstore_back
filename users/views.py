@@ -48,13 +48,10 @@ class LoginView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def confirm_email(request):
-    uidb64 = request.GET.get('uid')
-    token = request.GET.get('token')
-
+def confirm_email(request, uidb64, token):
     if uidb64 is not None and token is not None:
         try:
-            uid = force_str(urlsafe_base64_decode(uidb64))  # Изменено на force_str
+            uid = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
 
             if default_token_generator.check_token(user, token):
