@@ -12,6 +12,7 @@ class AdminCustomerUser(admin.ModelAdmin):
     fields = [
         'rating',
         'email',
+        'is_active',
         'balance',
         'order_user',
         'sum_order',
