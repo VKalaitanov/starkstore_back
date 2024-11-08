@@ -48,21 +48,21 @@ class LoginView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def confirm_email(request, uidb64, token):
-    if uidb64 is not None and token is not None:
+class ConfirmEmailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, uidb64, token):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
 
             if default_token_generator.check_token(user, token):
-                user.is_active = True  # Активируйте пользователя
+                user.is_active = True
                 user.save()
-                messages.success(request, 'Ваш адрес электронной почты подтвержден!')
                 return redirect('login')  # Перенаправление на страницу входа
             else:
-                messages.error(request, 'Ссылка для подтверждения недействительна.')
+                return Response({'detail': 'Ссылка для подтверждения недействительна.'},
+                                status=status.HTTP_400_BAD_REQUEST)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            user = None
-
-    messages.error(request, 'Ссылка для подтверждения недействительна.')
-    return redirect('login')
+            return Response({'detail': 'Ссылка для подтверждения недействительна.'},
+                            status=status.HTTP_400_BAD_REQUEST)
