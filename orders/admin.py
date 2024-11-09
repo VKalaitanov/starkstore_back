@@ -22,16 +22,16 @@ class OrderAdmin(admin.ModelAdmin):
         'notes'
     ]
 
-    # readonly_fields = [
-    #     'service',
-    #     'service_option',
-    #     'user',
-    #     'custom_data',
-    #     'quantity',
-    #     'created_at',
-    #     'total_price',
-    #     'admin_completed_order'
-    # ]
+    readonly_fields = [
+        # 'service',
+        # 'service_option',
+        # 'user',
+        # 'custom_data',
+        # 'quantity',
+        'created_at',
+        # 'total_price',
+        # 'admin_completed_order'
+    ]
 
     list_display = [
         'get_user_rating_display',
