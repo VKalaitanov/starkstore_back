@@ -73,7 +73,7 @@ class OrderAdmin(admin.ModelAdmin):
         return dict(CustomerUser.RatingChoice.choices).get(obj.user.rating, obj.user.rating)
 
     def has_add_permission(self, request):
-        return False
+        return True
 
 
 @admin.register(ReplenishmentBalance)
@@ -103,4 +103,4 @@ class ReplenishmentBalanceAdmin(admin.ModelAdmin):
     search_fields = ['user']
 
     def has_add_permission(self, request):
-        return False
+        return True
