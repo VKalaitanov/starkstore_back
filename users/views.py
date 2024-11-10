@@ -49,7 +49,7 @@ class GlobalMessageView(APIView):
 
     def post(self, request, *args, **kwargs):
         # Получаем сообщение, которое пользователь закрыл
-        message_id = request.data.get('message_id')
+        message_id = request.data.get('id')
 
         if not message_id:
             return Response({"error": "Message ID is required"}, status=400)
