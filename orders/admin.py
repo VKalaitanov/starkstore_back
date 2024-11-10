@@ -29,8 +29,8 @@ class OrderAdmin(admin.ModelAdmin):
         # 'custom_data',
         # 'quantity',
         'created_at',
-        # 'total_price',
-        # 'admin_completed_order'
+        'total_price',
+        'admin_completed_order'
     ]
 
     list_display = [
