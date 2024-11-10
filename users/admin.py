@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import CustomerUser, UserServiceDiscount
+from .models import CustomerUser, UserServiceDiscount, GlobalMessage
 
 
 @admin.register(CustomerUser)
@@ -128,3 +128,22 @@ class UserServiceDiscountAdmin(admin.ModelAdmin):
         'user',
         'service_option'
     ]
+
+
+@admin.register(GlobalMessage)
+class GlobalMessageAdmin(admin.ModelAdmin):
+    list_display = ('text', 'is_active', 'created_at', 'updated_at')  # Какие поля отображать в списке
+    list_filter = ('is_active',)  # Фильтрация по полю is_active
+    search_fields = ('text',)  # Поиск по тексту сообщения
+    ordering = ('-created_at',)  # Сортировка по дате создания, от новых к старым
+
+    # Добавляем поля для редактирования через админку
+    fieldsets = (
+        (None, {
+            'fields': ('text', 'is_active')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)  # Сворачиваем даты
+        }),
+    )
