@@ -19,7 +19,14 @@ class CustomUserCreateSerializer(UserCreatePasswordRetypeSerializer):
         model = CustomerUser
         fields = ['email', 'password']
 
+
 class GlobalMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = GlobalMessage
         fields = ['id', 'text', 'is_active', 'created_at', 'updated_at']
+
+    # Добавляем дополнительную логику для обработки данных в POST-запросе
+    def update(self, instance, validated_data):
+        instance.is_active = False  # Деактивируем сообщение
+        instance.save()
+        return instance

@@ -50,7 +50,11 @@ class GlobalMessageView(APIView):
     def post(self, request, *args, **kwargs):
         # Получаем сообщение, которое пользователь закрыл
         message_id = request.data.get('message_id')
-        message = GlobalMessage.objects.filter(id=message_id).first()
+
+        if not message_id:
+            return Response({"error": "Message ID is required"}, status=400)
+
+        message = GlobalMessage.objects.filter(id=message_id, is_active=True).first()
 
         if message:
             # Если нашли сообщение, меняем его статус на неактивное
@@ -58,5 +62,5 @@ class GlobalMessageView(APIView):
             message.save()
             return Response({"status": "Message marked as inactive"})
 
-        # Если сообщение не найдено
-        return Response({"error": "Message not found"}, status=404)
+        # Если сообщение не найдено или уже неактивно
+        return Response({"error": "Message not found or already inactive"}, status=404)
