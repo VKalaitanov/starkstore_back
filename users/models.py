@@ -119,3 +119,17 @@ class BalanceHistory(models.Model):
     old_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
     new_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
     create_time = models.DateTimeField(auto_now_add=True)
+
+
+class GlobalMessage(models.Model):
+    text = models.TextField("Текст сообщения")
+    is_active = models.BooleanField("Активное", default=True)
+    created_at = models.DateTimeField("Дата создания", auto_now_add=True)
+    updated_at = models.DateTimeField("Дата обновления", auto_now=True)
+
+    def __str__(self):
+        return self.text
+
+    class Meta:
+        verbose_name = "Глобальное сообщение"
+        verbose_name_plural = "Глобальные сообщения"

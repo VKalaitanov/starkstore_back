@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from djoser.serializers import UserCreatePasswordRetypeSerializer
 
-from .models import CustomerUser
+from .models import CustomerUser, GlobalMessage
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -18,3 +18,8 @@ class CustomUserCreateSerializer(UserCreatePasswordRetypeSerializer):
     class Meta(UserCreatePasswordRetypeSerializer.Meta):
         model = CustomerUser
         fields = ['email', 'password']
+
+class GlobalMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GlobalMessage
+        fields = ['id', 'text', 'is_active', 'created_at', 'updated_at']
