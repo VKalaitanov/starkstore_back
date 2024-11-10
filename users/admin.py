@@ -132,12 +132,14 @@ class UserServiceDiscountAdmin(admin.ModelAdmin):
 
 @admin.register(GlobalMessage)
 class GlobalMessageAdmin(admin.ModelAdmin):
-    list_display = ('text', 'is_active', 'created_at', 'updated_at')  # Какие поля отображать в списке
-    list_filter = ('is_active',)  # Фильтрация по полю is_active
-    search_fields = ('text',)  # Поиск по тексту сообщения
-    ordering = ('-created_at',)  # Сортировка по дате создания, от новых к старым
+    list_display = ('text', 'is_active', 'created_at', 'updated_at')
+    list_filter = ('is_active',)
+    search_fields = ('text',)
+    ordering = ('-created_at',)
 
-    # Добавляем поля для редактирования через админку
+    # Указываем поля только для чтения
+    readonly_fields = ('created_at', 'updated_at')
+
     fieldsets = (
         (None, {
             'fields': ('text', 'is_active')
