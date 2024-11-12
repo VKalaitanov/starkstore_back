@@ -261,9 +261,13 @@ DJOSER = {
     'SEND_ACTIVATION_EMAIL': True,
     'ACTIVATION_URL': 'activate/{uid}/{token}/',
     'USER_CREATE_PASSWORD_RETYPE': True,
+    'USERNAME_RESET_CONFIRM_URL': 'reset_password_confirm/{uid}/{token}/',
+    'SEND_PASSWORD_RESET_EMAIL': True,
+    'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': True,  # Показывать ли ошибку, если email не найден
     'SERIALIZERS': {
         'current_user': 'users.serializers.ProfileSerializer',
-        'user_create_password_retype': 'users.serializers.CustomUserCreateSerializer'
+        'user_create_password_retype': 'users.serializers.CustomUserCreateSerializer',
+        'set_username': 'users.serializers.CustomSetUsernameSerializer'
     },
 }
 

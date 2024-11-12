@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from djoser.serializers import UserCreatePasswordRetypeSerializer
-
+from djoser.serializers import UserCreatePasswordRetypeSerializer, SetUsernameSerializer
 from .models import CustomerUser, GlobalMessage
 
 
@@ -18,6 +17,20 @@ class CustomUserCreateSerializer(UserCreatePasswordRetypeSerializer):
     class Meta(UserCreatePasswordRetypeSerializer.Meta):
         model = CustomerUser
         fields = ['email', 'password']
+
+
+class CustomSetUsernameSerializer(SetUsernameSerializer):
+    current_email = serializers.EmailField()
+
+    class Meta(SetUsernameSerializer.Meta):
+        model = CustomerUser
+        fields = ['current_email', 'current_password', 'email']
+
+    def validate(self, data):
+        user = self.context['request'].user
+        if data.get('current_email') != user.email:
+            raise serializers.ValidationError("Текущий email не совпадает с email пользователя.")
+        return data
 
 
 class GlobalMessageSerializer(serializers.ModelSerializer):
