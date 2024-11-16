@@ -10,12 +10,11 @@ from .serializers import (
 )
 
 
-class ServiceListView(ListAPIView):
-    """
-    Список всех доступных сервисов.
-    """
-    queryset = Service.objects.all()
-    serializer_class = ServiceListSerializer
+class ServiceListView(APIView):
+    def get(self, request):
+        services = Service.objects.all()
+        serializer = ServiceListSerializer(services, many=True)
+        return Response(serializer.data)
 
 
 class ServiceCategoryListView(APIView):

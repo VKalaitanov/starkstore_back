@@ -17,7 +17,7 @@ class OrderGetAllView(ListAPIView):
 
 class OrderCreateView(CreateAPIView):
     serializer_class = OrderCreateSerializer
-    queryset = Order
+    queryset = Order.objects.all() 
     permission_classes = [IsAuthenticated]
 
 
