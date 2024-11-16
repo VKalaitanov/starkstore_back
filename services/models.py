@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from djmoney.models.fields import MoneyField
 
@@ -50,7 +52,8 @@ class ServiceOption(models.Model):
         user_discount_percentage = self.get_user_discount(user)
         max_discount_percentage = max(user_discount_percentage, self.discount_percentage)
 
-        discounted_price = self.price_per_unit.amount * (1 - max_discount_percentage / 100)
+        # Приводим max_discount_percentage к Decimal, чтобы избежать ошибки с умножением
+        discounted_price = self.price_per_unit.amount * Decimal(1 - max_discount_percentage / 100)
         return discounted_price
 
     def __str__(self):
