@@ -2,7 +2,16 @@ from rest_framework import serializers
 from .models import Service, ServiceOption
 
 
-class ServiceOptionGetAllSerializer(serializers.ModelSerializer):
+class ServiceGetAllSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Service
+        fields = [
+            'id',
+            'name',
+        ]
+
+
+class ServiceOptionsSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()  # Для вычисления максимальной скидки
     discounted_price = serializers.SerializerMethodField()  # Для вычисления цены с учётом скидки
     price_per_unit = serializers.SerializerMethodField()  # Преобразуем MoneyField в число
@@ -12,9 +21,12 @@ class ServiceOptionGetAllSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'category',
+            'required_fields',
+            'has_period',
             'price_per_unit',
             'discount_percentage',
             'discounted_price',
+            'created_at'
         ]
 
     def get_discount_percentage(self, obj):
@@ -48,15 +60,3 @@ class ServiceOptionGetAllSerializer(serializers.ModelSerializer):
     def get_price_per_unit(self, obj):
         """Преобразует поле Money в число (amount) для сериализации"""
         return obj.price_per_unit.amount
-
-
-class ServiceGetAllSerializer(serializers.ModelSerializer):
-    options = ServiceOptionGetAllSerializer(read_only=True, many=True)
-
-    class Meta:
-        model = Service
-        fields = [
-            'id',
-            'name',
-            'options'
-        ]
