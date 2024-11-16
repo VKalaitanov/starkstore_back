@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Service, ServiceOption
 
 
-class ServiceOptionGetAllSerializer(serializers.ModelSerializer):
+class ServiceOptionSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()  # Для вычисления максимальной скидки
     discounted_price = serializers.SerializerMethodField()  # Для вычисления цены с учётом скидки
     price_per_unit = serializers.SerializerMethodField()  # Преобразуем MoneyField в число
@@ -50,8 +50,8 @@ class ServiceOptionGetAllSerializer(serializers.ModelSerializer):
         return obj.price_per_unit.amount
 
 
-class ServiceGetAllSerializer(serializers.ModelSerializer):
-    options = ServiceOptionGetAllSerializer(read_only=True, many=True)
+class ServiceWithOptionsSerializer(serializers.ModelSerializer):
+    options = ServiceOptionSerializer(read_only=True, many=True)
 
     class Meta:
         model = Service
@@ -60,3 +60,16 @@ class ServiceGetAllSerializer(serializers.ModelSerializer):
             'name',
             'options'
         ]
+
+
+class ServiceListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Service
+        fields = ['id', 'name']
+
+
+class CategorySerializer(serializers.Serializer):
+    category = serializers.CharField()
+
+    class Meta:
+        fields = ['category']
