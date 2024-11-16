@@ -43,6 +43,16 @@ class ServiceOption(models.Model):
         except UserServiceDiscount.DoesNotExist:
             return 0
 
+    def get_discounted_price(self, user):
+        """
+        Рассчитывает цену с учетом скидки для конкретного пользователя.
+        """
+        user_discount_percentage = self.get_user_discount(user)
+        max_discount_percentage = max(user_discount_percentage, self.discount_percentage)
+
+        discounted_price = self.price_per_unit.amount * (1 - max_discount_percentage / 100)
+        return discounted_price
+
     def __str__(self):
         return f"{self.category} for {self.service.name}"
 
