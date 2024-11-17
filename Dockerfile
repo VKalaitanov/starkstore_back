@@ -26,6 +26,7 @@ COPY . .
 
 # Настройка прав доступа
 RUN chmod -R 777 ./
+RUN apt-get update && apt-get install -y curl
 
 # Команда для запуска сервера Gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "starkstore.wsgi:application"]
