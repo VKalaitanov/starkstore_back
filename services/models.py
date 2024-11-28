@@ -27,10 +27,16 @@ class ServiceOption(models.Model):
                                 default_currency="USD")
     discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="Скидка (%)")
 
-    required_fields = models.JSONField(default=dict, verbose_name="Поля для заполнения")  # Динамические поля для услуги
-    has_period = models.BooleanField(default=False,
-                                     verbose_name="Добавить период", )
-    #  Указывает, нужно ли поле "period" для этой услуги
+    required_field = models.ManyToManyField(
+        'RequiredField',
+        related_name='service_option',
+        verbose_name="Динамические поля"
+    )  # Динамические поля для услуги
+    points = models.ManyToManyField(
+        'PointsServiceOption',
+        related_name='service_option',
+        verbose_name="Пункты для опции"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def get_user_discount(self, user):
@@ -62,3 +68,25 @@ class ServiceOption(models.Model):
     class Meta:
         verbose_name = "Настройки сервиса"
         verbose_name_plural = "Настройки сервисов"
+
+
+class RequiredField(models.Model):
+    title = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = "Динамическое поле"
+        verbose_name_plural = "Динамические поля"
+
+
+class PointsServiceOption(models.Model):
+    title = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = "Пункты для опции"
+        verbose_name_plural = "Пункты для опций"

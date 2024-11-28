@@ -1,5 +1,6 @@
 from django.db import models
 from djmoney.models.fields import MoneyField
+from djmoney.money import Money
 
 from users.models import CustomerUser
 from services.models import Service, ServiceOption
@@ -37,7 +38,7 @@ class Order(models.Model):
     def calculate_total_price(self):
         """Рассчитывает общую стоимость с учётом скидки"""
         discounted_price = self.service_option.get_discounted_price(user=self.user)  # type: ignore
-        return discounted_price * self.quantity
+        return Money(discounted_price * self.quantity, currency="USD")
 
     def save(self, *args, **kwargs):
         # Перед сохранением вызываем метод для расчета общей стоимости

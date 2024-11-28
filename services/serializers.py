@@ -5,6 +5,8 @@ from .models import Service, ServiceOption
 class ServiceOptionSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()  # Для вычисления максимальной скидки
     discounted_price = serializers.SerializerMethodField()  # Для вычисления цены с учётом скидки
+    required_field = serializers.StringRelatedField(many=True)  # Сериализация связанных объектов как строки
+    points = serializers.StringRelatedField(many=True)  # Сериализация связанных объектов как строки
     price_per_unit = serializers.DecimalField(source='price_per_unit.amount', max_digits=15, decimal_places=2)
 
     class Meta:
@@ -15,6 +17,8 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
             'price_per_unit',
             'discount_percentage',
             'discounted_price',
+            'required_field',
+            'points'
         ]
 
     def get_discount_percentage(self, obj):

@@ -1,5 +1,8 @@
+import json
+
 from django.contrib import admin
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 
 from users.models import CustomerUser, ReplenishmentBalance
 from .models import Order
@@ -11,7 +14,7 @@ class OrderAdmin(admin.ModelAdmin):
         'service',
         'service_option',
         'user',
-        'custom_data',
+        'formatted_custom_data',
         'quantity',
         'total_price',
         'status',
@@ -28,6 +31,7 @@ class OrderAdmin(admin.ModelAdmin):
         # 'user',
         # 'custom_data',
         # 'quantity',
+        'formatted_custom_data',
         'created_at',
         'total_price',
         'admin_completed_order'
@@ -46,6 +50,32 @@ class OrderAdmin(admin.ModelAdmin):
 
     list_display_links = list_display
     search_fields = ['user']
+
+    def formatted_custom_data(self, obj):
+        """Вывод JSON из custom_data."""
+        try:
+            data = json.loads(json.dumps(obj.custom_data, ensure_ascii=False))
+
+            # Формируем HTML таблицу
+            html = '<table style="border-collapse: collapse; width: 100%;">'
+            html += '<thead><tr style="border-bottom: 1px solid #ddd;">'
+            html += '<th style="padding: 8px; text-align: left;">Key</th>'
+            html += '<th style="padding: 8px; text-align: left;">Value</th>'
+            html += '</tr></thead>'
+            html += '<tbody>'
+
+            for key, value in data.items():
+                html += f'<tr>'
+                html += f'<td style="padding: 8px; border-bottom: 1px solid #ddd;">{key}</td>'
+                html += f'<td style="padding: 8px; border-bottom: 1px solid #ddd;">{value}</td>'
+                html += f'</tr>'
+
+            html += '</tbody></table>'
+            return mark_safe(html)
+        except (TypeError, ValueError):
+            return "Invalid JSON"
+
+    formatted_custom_data.short_description = "Кастомные поля"
 
     def save_model(self, request, obj, form, change):
         if obj.status == obj.ChoicesStatus.COMPLETED.value:
