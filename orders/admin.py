@@ -16,6 +16,7 @@ class OrderAdmin(admin.ModelAdmin):
         'user',
         'formatted_custom_data',
         'quantity',
+        'custom_data',
         'total_price',
         'status',
         'period',
