@@ -47,6 +47,18 @@ class ServiceOption(models.Model):
         related_name='service_option',
         verbose_name="Пункты для опции"
     )
+    interval = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Интервал (1-60)",
+        help_text="Интервал в минутах, если применимо."
+    )
+
+    is_interval_required = models.BooleanField(
+        default=False,
+        verbose_name="Требуется интервал",
+        help_text="Отображать поле интервала в админке, если выбрано."
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 

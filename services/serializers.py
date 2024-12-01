@@ -8,6 +8,7 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
     required_field = serializers.StringRelatedField(many=True)  # Сериализация связанных объектов как строки
     points = serializers.StringRelatedField(many=True)  # Сериализация связанных объектов как строки
     price_per_unit = serializers.DecimalField(source='price_per_unit.amount', max_digits=15, decimal_places=2)
+    interval = serializers.IntegerField(required=False, allow_null=True)
 
     class Meta:
         model = ServiceOption
@@ -19,7 +20,8 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
             'discounted_price',
             'period',
             'required_field',
-            'points'
+            'points',
+            'interval'
         ]
 
     def get_discount_percentage(self, obj):
