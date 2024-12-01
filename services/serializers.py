@@ -8,6 +8,7 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
     required_field = serializers.StringRelatedField(many=True)  # Сериализация связанных объектов как строки
     points = serializers.StringRelatedField(many=True)  # Сериализация связанных объектов как строки
     price_per_unit = serializers.DecimalField(source='price_per_unit.amount', max_digits=15, decimal_places=2)
+    interval = serializers.IntegerField(required=False, allow_null=True, read_only=True)  # Добавляем поле интервала
 
     class Meta:
         model = ServiceOption
@@ -19,6 +20,7 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
             'discounted_price',
             'required_field',
             'points'
+            'interval',
         ]
 
     def get_discount_percentage(self, obj):
@@ -30,6 +32,17 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
     def get_discounted_price(self, obj):
         discount_percentage = self.get_discount_percentage(obj)
         return obj.price_per_unit.amount * (1 - discount_percentage / 100)
+
+    def to_representation(self, instance):
+        # Вызываем метод для нормализации данных перед выводом
+        representation = super().to_representation(instance)
+
+        # Проверяем, нужно ли показывать поле "interval"
+        if instance.interval is None:
+            # Если интервал пустой, убираем его из результата
+            representation.pop('interval', None)
+
+        return representation
 
 
 class ServiceWithOptionsSerializer(serializers.ModelSerializer):
