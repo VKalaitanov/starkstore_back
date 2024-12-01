@@ -16,13 +16,3 @@ class ServiceOptionAdminForm(forms.ModelForm):
             raise ValidationError('Цена за штуку не должна быть меньше 0 или ровна 0')
         return price
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Если объект уже существует, проверяем флаг is_interval_required
-        if self.instance and not self.instance.is_interval_required:
-            # Если галочка не установлена, скрываем поле interval
-            self.fields['interval'].widget = forms.HiddenInput()
-        else:
-            # Если галочка установлена, показываем поле interval
-            self.fields['interval'].widget = forms.NumberInput()
