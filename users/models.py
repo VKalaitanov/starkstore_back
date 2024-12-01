@@ -133,3 +133,14 @@ class GlobalMessage(models.Model):
     class Meta:
         verbose_name = "Глобальное сообщение"
         verbose_name_plural = "Глобальные сообщения"
+
+class UserGlobalMessageStatus(models.Model):
+    user = models.ForeignKey(CustomerUser, on_delete=models.CASCADE)
+    message = models.ForeignKey(GlobalMessage, on_delete=models.CASCADE)
+    is_closed = models.BooleanField(default=False)  # Статус закрытого сообщения
+
+    def __str__(self):
+        return f"{self.user} - {self.message.text}"
+
+    class Meta:
+        unique_together = ('user', 'message')  # Чтобы каждый пользователь мог закрыть только одно сообщение один раз

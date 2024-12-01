@@ -1,11 +1,10 @@
 from djoser.views import UserViewSet
 from rest_framework import status
-from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import GlobalMessage
+from .models import GlobalMessage, UserGlobalMessageStatus
 from .serializers import GlobalMessageSerializer
 
 
@@ -37,18 +36,21 @@ class GlobalMessageView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        # Получаем активное сообщение
+        # Получаем активное сообщение, проверяя, не закрыто ли оно пользователем
         message = GlobalMessage.objects.filter(is_active=True).first()
 
         if message:
-            # Если есть активное сообщение, возвращаем его
+            # Проверяем, закрыто ли это сообщение пользователем
+            user_message_status = UserGlobalMessageStatus.objects.filter(user=request.user, message=message).first()
+            if user_message_status and user_message_status.is_closed:
+                return Response({"message": "Message closed by user"})
+
+            # Если сообщение активно, возвращаем его
             return Response(GlobalMessageSerializer(message).data)
 
-        # Если нет активных сообщений
         return Response({"message": "No active global messages"})
 
     def post(self, request, *args, **kwargs):
-        # Получаем сообщение, которое пользователь закрыл
         message_id = request.data.get('id')
 
         if not message_id:
@@ -57,10 +59,14 @@ class GlobalMessageView(APIView):
         message = GlobalMessage.objects.filter(id=message_id, is_active=True).first()
 
         if message:
-            # Если нашли сообщение, меняем его статус на неактивное
-            message.is_active = False
-            message.save()
-            return Response({"status": "Message marked as inactive"})
+            # Создаем или обновляем запись о том, что пользователь закрыл сообщение
+            user_message_status, created = UserGlobalMessageStatus.objects.get_or_create(
+                user=request.user, message=message)
 
-        # Если сообщение не найдено или уже неактивно
+            # Отмечаем сообщение как закрыто
+            user_message_status.is_closed = True
+            user_message_status.save()
+
+            return Response({"status": "Message closed for user"})
+
         return Response({"error": "Message not found or already inactive"}, status=404)
