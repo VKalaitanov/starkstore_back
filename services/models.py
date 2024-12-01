@@ -51,13 +51,13 @@ class ServiceOption(models.Model):
         null=True,
         blank=True,
         verbose_name="Интервал (1-60)",
-        help_text="Интервал в минутах, если применимо."
+        help_text="Интервал"
     )
 
     is_interval_required = models.BooleanField(
         default=False,
         verbose_name="Требуется интервал",
-        help_text="Отображать поле интервала в админке, если выбрано."
+        help_text="Если необходим интервал в услуге"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

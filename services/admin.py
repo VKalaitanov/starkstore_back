@@ -11,15 +11,16 @@ admin.site.register(PointsServiceOption)
 
 class ServiceOptionAdmin(admin.ModelAdmin):
     form = ServiceOptionAdminForm
-    search_fields = ['service__name', 'name', 'required_field', 'points', 'period', 'is_interval_required', 'interval']
+    search_fields = ['service__name', 'category', 'price_per_unit', 'period', 'is_interval_required', 'interval']
+    list_filter = ['is_interval_required']
 
     def get_fields(self, request, obj=None):
         fields = super().get_fields(request, obj)
-        if obj and obj.is_interval_required:
-            fields.append('interval')
+        if obj and not obj.is_interval_required:
+            # Если галочка не установлена, убираем поле interval
+            if 'interval' in fields:
+                fields.remove('interval')
         return fields
-
-    list_filter = ['is_interval_required']
 
 
 admin.site.register(ServiceOption, ServiceOptionAdmin)
