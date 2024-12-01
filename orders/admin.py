@@ -49,7 +49,6 @@ class OrderAdmin(admin.ModelAdmin):
         'status',
         'period',
         'interval',
-        'interval',
         'created_at'
     ]
 
