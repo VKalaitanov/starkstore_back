@@ -37,7 +37,23 @@ class ServiceOption(models.Model):
         related_name='service_option',
         verbose_name="Пункты для опции"
     )
+    use_interval = models.BooleanField(
+        default=False,
+        verbose_name="Использовать интервал"
+    )
+    interval = models.PositiveIntegerField(
+        blank=True, null=True,
+        verbose_name="Интервал (1-60)"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        if self.use_interval and (self.interval is None or not (1 <= self.interval <= 60)):
+            raise ValueError("Интервал должен быть указан и находиться в пределах от 1 до 60.")
+        if not self.use_interval:
+            self.interval = None
+        super(ServiceOption, self).clean()
 
     def get_user_discount(self, user):
         """
