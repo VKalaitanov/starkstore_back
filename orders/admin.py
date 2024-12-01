@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
+from services.models import ServiceOption
 from users.models import CustomerUser, ReplenishmentBalance
 from .models import Order
 
@@ -87,13 +88,13 @@ class OrderAdmin(admin.ModelAdmin):
         elif obj.status == obj.ChoicesStatus.RUNNING.value:
             # Устанавливаем дату завершения по периоду, если она не указана
             if obj.completed is None and obj.period is not None:
-                if obj.period == obj.PeriodChoices.HOUR.value:
+                if obj.period == ServiceOption.PeriodChoices.HOUR.value:
                     obj.completed = timezone.now() + timezone.timedelta(hours=1)
-                elif obj.period == obj.PeriodChoices.DAY.value:
+                elif obj.period == ServiceOption.PeriodChoices.DAY.value:
                     obj.completed = timezone.now() + timezone.timedelta(days=1)
-                elif obj.period == obj.PeriodChoices.WEEK.value:
+                elif obj.period == ServiceOption.PeriodChoices.WEEK.value:
                     obj.completed = timezone.now() + timezone.timedelta(weeks=1)
-                elif obj.period == obj.PeriodChoices.MONTH.value:
+                elif obj.period == ServiceOption.PeriodChoices.MONTH.value:
                     obj.completed = timezone.now() + timezone.timedelta(days=30)
 
         obj.save()  # Сохраняем объект

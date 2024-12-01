@@ -40,6 +40,14 @@ class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
             'notes',
         ]
 
+    def create(self, validated_data):
+        # При создании заказа, если period не был передан, он будет взят из service_option
+        service_option = validated_data.get('service_option')
+        period = validated_data.get('period', service_option.period)  # Берем period из service_option
+        validated_data['period'] = period  # Устанавливаем period в validated_data
+
+        return super().create(validated_data)
+
 
 class ReplenishmentBalanceCreateSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())

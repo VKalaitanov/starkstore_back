@@ -12,12 +12,6 @@ class Order(models.Model):
         RUNNING = 'running'
         COMPLETED = 'completed'
 
-    class PeriodChoices(models.Choices):
-        HOUR = 'Hour'
-        DAY = 'Day'
-        WEEK = 'Week'
-        MONTH = 'Month'
-
     service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name="Сервис")
     service_option = models.ForeignKey(ServiceOption, on_delete=models.CASCADE, verbose_name='Опции')
     user = models.ForeignKey(CustomerUser, related_name="orders", on_delete=models.CASCADE, verbose_name='Пользователь')
@@ -27,8 +21,8 @@ class Order(models.Model):
                              default_currency="USD")
     status = models.CharField(max_length=50, choices=ChoicesStatus.choices, default=ChoicesStatus.PENDING,
                               verbose_name='Статус')
-    period = models.CharField(max_length=50, blank=True, null=True, choices=PeriodChoices.choices,
-                              default=PeriodChoices.HOUR, verbose_name='Период')
+    period = models.CharField(max_length=50, blank=True, null=True, choices=ServiceOption.PeriodChoices.choices,
+                              default=ServiceOption.PeriodChoices.HOUR, verbose_name='Период')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     notes = models.TextField(blank=True, verbose_name="Примечания")
     completed = models.DateTimeField(null=True, blank=True, verbose_name='Время завершения')
@@ -42,6 +36,9 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         # Рассчитываем общую стоимость
+        if not self.period:
+            self.period = self.service_option.period
+
         self.total_price = self.calculate_total_price()
         super(Order, self).save(*args, **kwargs)
 

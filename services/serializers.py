@@ -17,6 +17,7 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
             'price_per_unit',
             'discount_percentage',
             'discounted_price',
+            'period',
             'required_field',
             'points'
         ]

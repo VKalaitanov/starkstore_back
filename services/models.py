@@ -17,16 +17,26 @@ class Service(models.Model):
 
 
 class ServiceOption(models.Model):
+    class PeriodChoices(models.Choices):
+        HOUR = 'Hour'
+        DAY = 'Day'
+        WEEK = 'Week'
+        MONTH = 'Month'
+
     service = models.ForeignKey(Service, related_name='options', on_delete=models.CASCADE,
                                 verbose_name="Название сервиса")
 
-    category = models.CharField(max_length=255, verbose_name="Категория")  # Например, "Followers" или "Likes"
-
+    category = models.CharField(max_length=255, verbose_name="Категория")
     price_per_unit = MoneyField(max_digits=15, decimal_places=2,
                                 verbose_name='Цена', default=0,
                                 default_currency="USD")
     discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="Скидка (%)")
-
+    period = models.CharField(
+        max_length=50,
+        choices=PeriodChoices.choices,
+        default=PeriodChoices.HOUR,
+        verbose_name="Период"
+    )
     required_field = models.ManyToManyField(
         'RequiredField',
         related_name='service_option',
