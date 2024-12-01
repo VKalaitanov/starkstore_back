@@ -27,6 +27,7 @@ class OrderGetAllSerializer(serializers.ModelSerializer):
 
 class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    interval = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=60, default=None)
 
     class Meta:
         model = Order
@@ -37,8 +38,22 @@ class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
             'custom_data',
             'quantity',
             'period',
+            'interval',
             'notes',
         ]
+
+    def validate(self, data):
+        service_option = data.get('service_option')
+
+        # Проверяем, требуется ли интервал
+        if service_option.is_interval_required and not data.get('interval'):
+            raise serializers.ValidationError({"interval": "Для выбранной опции требуется указать интервал."})
+
+        # Если интервал не требуется, но передан
+        if not service_option.is_interval_required and data.get('interval'):
+            raise serializers.ValidationError({"interval": "Для выбранной опции интервал не нужен."})
+
+        return data
 
     def create(self, validated_data):
         # При создании заказа, если period не был передан, он будет взят из service_option

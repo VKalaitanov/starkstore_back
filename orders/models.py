@@ -23,6 +23,12 @@ class Order(models.Model):
                               verbose_name='Статус')
     period = models.CharField(max_length=50, blank=True, null=True, choices=ServiceOption.PeriodChoices.choices,
                               default=ServiceOption.PeriodChoices.HOUR, verbose_name='Период')
+    interval = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Интервал (1-60)",
+        help_text="Интервал",
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     notes = models.TextField(blank=True, verbose_name="Примечания")
     completed = models.DateTimeField(null=True, blank=True, verbose_name='Время завершения')
@@ -38,6 +44,11 @@ class Order(models.Model):
         # Рассчитываем общую стоимость
         if not self.period:
             self.period = self.service_option.period
+
+        if self.service_option.is_interval_required and not self.interval:
+            raise ValueError("Для выбранной опции требуется указать интервал.")
+        if not self.service_option.is_interval_required:
+            self.interval = None  # Очистка значения интервала, если он не требуется
 
         self.total_price = self.calculate_total_price()
         super(Order, self).save(*args, **kwargs)

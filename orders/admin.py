@@ -21,6 +21,7 @@ class OrderAdmin(admin.ModelAdmin):
         'total_price',
         'status',
         'period',
+        'interval',
         'created_at',
         'completed',
         'admin_completed_order',
@@ -47,11 +48,20 @@ class OrderAdmin(admin.ModelAdmin):
         'quantity',
         'status',
         'period',
+        'interval',
+        'interval',
         'created_at'
     ]
 
     list_display_links = list_display
     search_fields = ['user']
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        if obj and not obj.service_option.is_interval_required:
+            if 'interval' in fields:
+                fields.remove('interval')
+        return fields
 
     def formatted_custom_data(self, obj):
         """Вывод JSON из custom_data."""
