@@ -11,7 +11,7 @@ admin.site.register(PointsServiceOption)
 
 class ServiceOptionAdmin(admin.ModelAdmin):
     form = ServiceOptionAdminForm
-    search_fields = ['service__name', 'name', 'required_field', 'points']
+    search_fields = ['service__name', 'name', 'required_field', 'points', 'period']
 
 
 admin.site.register(ServiceOption, ServiceOptionAdmin)
