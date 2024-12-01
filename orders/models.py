@@ -45,15 +45,15 @@ class Order(models.Model):
         return Money(discounted_price * self.quantity, currency="USD")
 
     def save(self, *args, **kwargs):
-        # Перед сохранением вызываем метод для расчета общей стоимости
-        self.total_price = self.calculate_total_price()
-        # Проверяем, требует ли услуга интервал
+        # Проверка на интервал
         if self.service_option.use_interval:
-            if not (1 <= (self.interval or 0) <= 60):
+            if not self.interval or not (1 <= self.interval <= 60):
                 raise ValueError("Интервал должен быть указан и находиться в пределах от 1 до 60.")
         else:
             self.interval = None  # Если интервал не нужен, очищаем его
-        # Вызываем оригинальный метод save()
+
+        # Рассчитываем общую стоимость
+        self.total_price = self.calculate_total_price()
         super(Order, self).save(*args, **kwargs)
 
     class Meta:

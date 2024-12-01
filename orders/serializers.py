@@ -35,7 +35,7 @@ class OrderGetAllSerializer(serializers.ModelSerializer):
 
 class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    interval = serializers.IntegerField(required=False, allow_null=True, read_only=True)  # Добавляем поле интервала
+    interval = serializers.IntegerField(required=False, allow_null=True)
 
 
     class Meta:
