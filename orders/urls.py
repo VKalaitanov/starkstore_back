@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import OrderGetAllView, OrderCreateView, ReplenishmentBalanceCreateView, CalculateOrderPriceView
+from .views import OrderGetAllView, OrderCreateView, ReplenishmentBalanceCreateView
 
 urlpatterns = [
     path('all/', OrderGetAllView.as_view()),
