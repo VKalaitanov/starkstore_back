@@ -20,7 +20,6 @@ class OrderAdmin(admin.ModelAdmin):
         'total_price',
         'status',
         'period',
-        'interval',
         'created_at',
         'completed',
         'admin_completed_order',
@@ -47,7 +46,6 @@ class OrderAdmin(admin.ModelAdmin):
         'quantity',
         'status',
         'period',
-        'interval',
         'created_at'
     ]
 
@@ -81,13 +79,6 @@ class OrderAdmin(admin.ModelAdmin):
     formatted_custom_data.short_description = "Кастомные поля"
 
     def save_model(self, request, obj, form, change):
-        # Проверка интервала для услуги
-        if obj.service_option.use_interval:
-            if not obj.interval or not (1 <= obj.interval <= 60):
-                raise ValueError("Укажите интервал в пределах от 1 до 60.")
-        else:
-            obj.interval = None  # Если интервал не требуется, очищаем значение
-
         if obj.status == obj.ChoicesStatus.COMPLETED.value:
             if obj.completed is None:
                 obj.completed = timezone.now()  # Устанавливаем текущее время, если не указано
@@ -111,14 +102,6 @@ class OrderAdmin(admin.ModelAdmin):
     def get_user_rating_display(self, obj):
         """Метод для отображения звёзд вместо цифр"""
         return dict(CustomerUser.RatingChoice.choices).get(obj.user.rating, obj.user.rating)
-
-    def get_fields(self, request, obj=None):
-        """Динамически включаем поле 'interval' только для услуг с use_interval."""
-        fields = super().get_fields(request, obj)
-        if obj and obj.service_option.use_interval:
-            if 'interval' not in fields:
-                fields.append('interval')
-        return fields
 
     def has_add_permission(self, request):
         return True

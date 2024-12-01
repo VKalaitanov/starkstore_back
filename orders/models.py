@@ -34,10 +34,6 @@ class Order(models.Model):
     completed = models.DateTimeField(null=True, blank=True, verbose_name='Время завершения')
     admin_completed_order = models.CharField(max_length=255, blank=True, null=True,
                                              verbose_name='Завершено администратором')
-    interval = models.PositiveIntegerField(
-        blank=True, null=True,
-        verbose_name="Интервал (1-60)"
-    )
 
     def calculate_total_price(self):
         """Рассчитывает общую стоимость с учётом скидки"""
@@ -45,13 +41,6 @@ class Order(models.Model):
         return Money(discounted_price * self.quantity, currency="USD")
 
     def save(self, *args, **kwargs):
-        # Проверка на интервал
-        if self.service_option.use_interval:
-            if not self.interval or not (1 <= self.interval <= 60):
-                raise ValueError("Интервал должен быть указан и находиться в пределах от 1 до 60.")
-        else:
-            self.interval = None  # Если интервал не нужен, очищаем его
-
         # Рассчитываем общую стоимость
         self.total_price = self.calculate_total_price()
         super(Order, self).save(*args, **kwargs)
