@@ -1,11 +1,10 @@
-from rest_framework.generics import ListAPIView
-from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from django.http import Http404
-from .models import Service, ServiceOption
+from .models import Service
+from .models import ServiceOption
 from .serializers import (
     ServiceListSerializer,
-    CategorySerializer,
     ServiceOptionSerializer
 )
 
@@ -52,3 +51,38 @@ class ServiceOptionListView(APIView):
         # Передача контекста для расчета скидки (пользователь)
         serializer = ServiceOptionSerializer(options, many=True, context={'user': request.user})
         return Response(serializer.data)
+
+class CalculateOrderPriceView(APIView):
+    """
+    API для расчета суммы заказа
+    """
+    def post(self, request):
+        service_option_id = request.data.get('service_option_id')
+        quantity = request.data.get('quantity')
+
+        # Проверяем, что переданы оба параметра
+        if not service_option_id or not quantity:
+            return Response({"error": "Необходимо указать service_option_id и quantity."}, status=400)
+
+        # Проверяем существование услуги
+        try:
+            service_option = ServiceOption.objects.get(id=service_option_id)
+        except ServiceOption.DoesNotExist:
+            raise Http404("Опция услуги не найдена.")
+
+        # Проверяем валидность количества
+        try:
+            quantity = int(quantity)
+            if quantity <= 0:
+                raise ValueError("Количество должно быть больше 0.")
+        except ValueError:
+            return Response({"error": "Некорректное количество."}, status=400)
+
+        # Рассчитываем сумму
+        discounted_price = service_option.get_discounted_price(request.user)  # Цена за единицу с учетом скидки
+        total_price = discounted_price * quantity  # Итоговая сумма
+
+        # Возвращаем сумму
+        return Response({
+            "total_price": round(total_price, 2),  # Округляем до двух знаков
+        })
