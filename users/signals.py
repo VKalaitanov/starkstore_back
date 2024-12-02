@@ -19,7 +19,7 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
         try:
             old_user = CustomerUser.objects.get(id=instance.id)
             if old_user.email != instance.email:  # Email изменился
-                instance.is_active = False
+                # instance.is_active = False
 
                 # Генерация токена активации и id пользователя
                 token = default_token_generator.make_token(instance)
