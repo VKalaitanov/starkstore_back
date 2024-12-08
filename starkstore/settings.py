@@ -22,7 +22,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 INTERNAL_IPS = ["127.0.0.1", '77.238.233.222', 'starkstore.com']
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # AXES_FAILURE_LIMIT = 5  # число попыток для входа
 # AXES_COOLOFF_TIME = 0.01  # блок на 2 часа
