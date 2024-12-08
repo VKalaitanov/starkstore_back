@@ -134,6 +134,7 @@ class GlobalMessage(models.Model):
         verbose_name = "Глобальное сообщение"
         verbose_name_plural = "Глобальные сообщения"
 
+
 class UserGlobalMessageStatus(models.Model):
     user = models.ForeignKey(CustomerUser, on_delete=models.CASCADE)
     message = models.ForeignKey(GlobalMessage, on_delete=models.CASCADE)

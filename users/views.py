@@ -60,7 +60,7 @@ class GlobalMessageView(APIView):
 
     def get(self, request, *args, **kwargs):
         # Получаем активное сообщение, проверяя, не закрыто ли оно пользователем
-        message = GlobalMessage.objects.filter(is_active=True).order_by('-created_at')
+        message = GlobalMessage.objects.filter(is_active=True).first()
 
         if message:
             # Проверяем, закрыто ли это сообщение пользователем
