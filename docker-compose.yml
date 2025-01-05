@@ -18,8 +18,8 @@ services:
       - .env
     volumes:
       - ./:/app
-      - static:/app/static
-      - media:/app/media
+      - ./static:/app/static
+      - ./media:/app/media
     depends_on:
       postgres:
         condition: service_healthy
