@@ -17,12 +17,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 
 ALLOWED_HOSTS = ['*']
-INTERNAL_IPS = ["127.0.0.1", '77.238.233.222', 'starkstore.com']
+INTERNAL_IPS = ["127.0.0.1", '77.238.233.222', 'project-pit.ru', 'starkstore.com']
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_TRUSTED_ORIGINS = ['https://project-pit.ru']
 
 # AXES_FAILURE_LIMIT = 5  # число попыток для входа
 # AXES_COOLOFF_TIME = 0.01  # блок на 2 часа
@@ -137,11 +138,11 @@ LOGGING = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('POSTGRES_DB'),
-        'USER': env('POSTGRES_USER'),
-        'PASSWORD': env('POSTGRES_PASSWORD'),
-        'HOST': env('POSTGRES_HOST'),
-        'PORT': env('POSTGRES_PORT'),
+        'NAME': 'starkstore_db',
+        'USER': 'postgres',
+        'PASSWORD': '1234',
+        'HOST': 'service_postgres',
+        'PORT': '5432',
     }
 }
 
@@ -182,9 +183,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
+STATIC_ROOT = '/app/static/'
+
+MEDIA_ROOT = '/app/media'
+MEDIA_URL = 'media/'
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -235,9 +238,6 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
 
-MEDIA_ROOT = BASE_DIR / 'media'
-MEDIA_URL = '/media/'
-
 AUTHENTICATION_BACKENDS = [
     # 'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend'
@@ -255,7 +255,7 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 EMAIL_SERVER = EMAIL_HOST_USER
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_ADMIN = list(EMAIL_HOST_USER)
-FRONTEND_URL = 'http://starkstore.com/activate'
+FRONTEND_URL = 'https://starkstore.com/activate'
 
 DJOSER = {
     'SEND_ACTIVATION_EMAIL': True,

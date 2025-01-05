@@ -28,4 +28,4 @@ COPY . .
 RUN chmod -R 777 ./
 
 # Команда для запуска сервера Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "starkstore.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:3003", "starkstore.wsgi:application"]
