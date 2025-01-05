@@ -51,7 +51,7 @@ class Order(models.Model):
 
         # Если интервал не требуется, устанавливаем его в None
         if not self.service_option.is_interval_required:
-            self.interval = None
+            self.interval = 1
 
         # Рассчитываем общую стоимость
         self.total_price = self.calculate_total_price()
