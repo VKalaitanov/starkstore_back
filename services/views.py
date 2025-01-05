@@ -7,7 +7,6 @@ from .serializers import (
     ServiceListSerializer,
     ServiceOptionSerializer
 )
-from django.db import transaction
 
 
 class ServiceListView(APIView):
@@ -45,18 +44,18 @@ class ServiceOptionListView(APIView):
         try:
             service = Service.objects.get(id=service_id)
         except Service.DoesNotExist:
-            return Response({"error": f"Услуга с ID {service_id} не найдена."}, status=404)
+            return Response({"detail": f"Услуга с ID {service_id} не найдена."}, status=404)
 
         options = ServiceOption.objects.filter(service=service, category=category)
         if not options.exists():
-            return Response({"error": f"Опции для категории '{category}' не найдены."}, status=404)
+            return Response({"detail": f"Опции для категории '{category}' не найдены."}, status=404)
 
         try:
             # Передача контекста для расчета скидки (пользователь)
             serializer = ServiceOptionSerializer(options, many=True, context={'user': request.user})
             return Response(serializer.data)
         except Exception as e:
-            return Response({"error": f"Произошла ошибка при получении данных: {str(e)}"}, status=500)
+            return Response({"detail": f"Произошла ошибка при получении данных: {str(e)}"}, status=500)
 
 
 class CalculateOrderPriceView(APIView):
@@ -65,24 +64,35 @@ class CalculateOrderPriceView(APIView):
     """
 
     def post(self, request):
-        with transaction.atomic():
-            service_option_id = request.data.get('service_option_id')
-            quantity = request.data.get('quantity')
+        service_option_id = request.data.get('service_option_id')
+        quantity = request.data.get('quantity')
 
-            # Проверяем, что переданы оба параметра
-            if not service_option_id or not quantity:
-                return Response({"error": "Необходимо указать service_option_id и quantity."}, status=400)
+        # Проверяем, что переданы оба параметра
+        if not service_option_id or not quantity:
+            return Response({"detail": "Необходимо указать service_option_id и quantity."}, status=400)
 
-            # Проверяем существование услуги
-            try:
-                service_option = ServiceOption.objects.get(id=service_option_id)
-            except ServiceOption.DoesNotExist:
-                return Response({"error": "Опция услуги не найдена."}, status=404)
+        # Проверяем существование услуги
+        try:
+            service_option = ServiceOption.objects.get(id=service_option_id)
+        except ServiceOption.DoesNotExist:
+            return Response({"detail": "Опция услуги не найдена."}, status=404)
 
-            # Проверяем валидность количества
-            try:
-                quantity = int(quantity)
-                if quantity <= 0:
-                    raise ValueError("Количество должно быть больше 0.")
-            except ValueError:
-                return Response({"error": "Некорректное количество."}, status=400)
+        # Проверяем валидность количества
+        try:
+            quantity = int(quantity)
+            if quantity <= 0:
+                raise ValueError("Количество должно быть больше 0.")
+        except ValueError:
+            return Response({"detail": "Некорректное количество."}, status=400)
+
+        try:
+            # Рассчитываем сумму
+            discounted_price = service_option.get_discounted_price(request.user)  # Цена за единицу с учетом скидки
+            total_price = discounted_price * quantity  # Итоговая сумма
+        except Exception as e:
+            return Response({"detail": f"Произошла ошибка при расчете суммы: {str(e)}"}, status=500)
+
+        # Возвращаем сумму
+        return Response({
+            "total_price": round(total_price, 2),  # Округляем до двух знаков
+        })
