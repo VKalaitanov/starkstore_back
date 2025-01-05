@@ -62,6 +62,9 @@ class ServiceOption(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Новое поле для изображения
+    image = models.ImageField(upload_to='service_images/', null=True, blank=True, verbose_name="Изображение")
+
     def get_user_discount(self, user):
         """
         Получает индивидуальную скидку для пользователя на эту услугу.
@@ -91,6 +94,7 @@ class ServiceOption(models.Model):
     class Meta:
         verbose_name = "Настройки сервиса"
         verbose_name_plural = "Настройки сервисов"
+
 
 
 class RequiredField(models.Model):

@@ -1,12 +1,12 @@
 from rest_framework import serializers
 from .models import Service, ServiceOption
-
+from rest_framework.exceptions import ValidationError
 
 class ServiceOptionSerializer(serializers.ModelSerializer):
-    discount_percentage = serializers.SerializerMethodField()  # Для вычисления максимальной скидки
-    discounted_price = serializers.SerializerMethodField()  # Для вычисления цены с учётом скидки
-    required_field = serializers.StringRelatedField(many=True)  # Сериализация связанных объектов как строки
-    points = serializers.StringRelatedField(many=True)  # Сериализация связанных объектов как строки
+    discount_percentage = serializers.SerializerMethodField()
+    discounted_price = serializers.SerializerMethodField()
+    required_field = serializers.StringRelatedField(many=True)
+    points = serializers.StringRelatedField(many=True)
     price_per_unit = serializers.DecimalField(source='price_per_unit.amount', max_digits=15, decimal_places=2)
     interval = serializers.IntegerField(required=False, allow_null=True)
 
@@ -31,8 +31,12 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
         return max(obj.discount_percentage, obj.get_user_discount(user))
 
     def get_discounted_price(self, obj):
-        discount_percentage = self.get_discount_percentage(obj)
-        return obj.price_per_unit.amount * (1 - discount_percentage / 100)
+        try:
+            discount_percentage = self.get_discount_percentage(obj)
+            discounted_price = obj.price_per_unit.amount * (1 - discount_percentage / 100)
+            return discounted_price
+        except Exception as e:
+            raise ValidationError({"detail": "Ошибка при расчете скидки. " + str(e)})
 
 
 class ServiceWithOptionsSerializer(serializers.ModelSerializer):
