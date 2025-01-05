@@ -6,6 +6,7 @@ from djmoney.models.fields import MoneyField
 
 class Service(models.Model):
     name = models.CharField(max_length=255, verbose_name="Название сервиса")  # Название сервиса (YouTube, VK и т.д.)
+    image = models.ImageField(upload_to='service_images/', null=True, blank=True, verbose_name="Изображение")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -61,9 +62,6 @@ class ServiceOption(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-
-    # Новое поле для изображения
-    image = models.ImageField(upload_to='service_images/', null=True, blank=True, verbose_name="Изображение")
 
     def get_user_discount(self, user):
         """
