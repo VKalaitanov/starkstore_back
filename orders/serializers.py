@@ -50,7 +50,7 @@ class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
             raise serializers.ValidationError({"detail": "Для выбранной опции требуется указать интервал."})
 
         # Если интервал не требуется, но передан
-        if not service_option.is_interval_required and data.get('interval'):
+        if not service_option.is_interval_required and data.get('interval') is not None:
             raise serializers.ValidationError({"detail": "Для выбранной опции интервал не нужен."})
 
         return data

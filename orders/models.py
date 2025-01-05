@@ -41,16 +41,19 @@ class Order(models.Model):
         return Money(discounted_price * self.quantity, currency="USD")
 
     def save(self, *args, **kwargs):
-        # Рассчитываем общую стоимость
+        # Устанавливаем период, если он не передан
         if not self.period:
             self.period = self.service_option.period
 
+        # Проверяем интервал
         if self.service_option.is_interval_required and not self.interval:
             raise ValueError("Для выбранной опции требуется указать интервал.")
 
+        # Если интервал не требуется, устанавливаем его в None
         if not self.service_option.is_interval_required:
-            self.interval = None  # Очистка значения интервала, если он не требуется
+            self.interval = None
 
+        # Рассчитываем общую стоимость
         self.total_price = self.calculate_total_price()
 
         super(Order, self).save(*args, **kwargs)
