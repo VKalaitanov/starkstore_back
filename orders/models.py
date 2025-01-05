@@ -37,7 +37,7 @@ class Order(models.Model):
 
     def calculate_total_price(self):
         """Рассчитывает общую стоимость с учётом скидки"""
-        discounted_price = self.service_option.get_discounted_price(user=self.user)  # type: ignore
+        discounted_price = self.service_option.get_discounted_price(user=self.user)
         return Money(discounted_price * self.quantity, currency="USD")
 
     def save(self, *args, **kwargs):
@@ -47,10 +47,12 @@ class Order(models.Model):
 
         if self.service_option.is_interval_required and not self.interval:
             raise ValueError("Для выбранной опции требуется указать интервал.")
+
         if not self.service_option.is_interval_required:
             self.interval = None  # Очистка значения интервала, если он не требуется
 
         self.total_price = self.calculate_total_price()
+
         super(Order, self).save(*args, **kwargs)
 
     class Meta:
