@@ -37,9 +37,11 @@ class Order(models.Model):
                                              verbose_name='Завершено администратором')
 
     def calculate_total_price(self):
-        """Рассчитывает общую стоимость с учётом скидки"""
-        discounted_price = self.service_option.get_discounted_price(user=self.user)
-        return Money(discounted_price * self.quantity, currency="USD")
+        try:
+            discounted_price = self.service_option.get_discounted_price(user=self.user)
+            return Money(discounted_price * self.quantity, currency="USD")
+        except Exception as e:
+            raise ValueError(f"Ошибка при расчёте цены: {str(e)}")
 
     def save(self, *args, **kwargs):
         # Устанавливаем период, если он не передан
