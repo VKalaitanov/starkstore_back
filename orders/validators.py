@@ -1,44 +1,64 @@
+import logging
 from rest_framework import serializers
-
 from orders.models import Order
 from .models import Service, ServiceOption
 
+# Настройка логгера
+logger = logging.getLogger(__name__)
 
 class ControlBalance:
     def validate_user(self, value):
-        service_option = self.initial_data.get('service_option')  # type: ignore
-        quantity = self.initial_data.get('quantity')  # type: ignore
-        service = self.initial_data.get('service')  # type: ignore
-
-        if not service_option:
-            raise serializers.ValidationError("Service option is required.")
-
-        if not quantity or int(quantity) <= 0:
-            raise serializers.ValidationError("Quantity must be greater than 0.")
-
-        # Получаем объект ServiceOption
         try:
-            service_option_obj = ServiceOption.objects.get(id=service_option)  # type: ignore
-            service_id = Service.objects.get(id=service)  # type: ignore
-        except ServiceOption.DoesNotExist:  # type: ignore
-            raise serializers.ValidationError("Service option does not exist.")
+            # Получаем данные из входных данных
+            service_option_id = self.initial_data.get('service_option')  # type: ignore
+            quantity = self.initial_data.get('quantity')  # type: ignore
+            service_id = self.initial_data.get('service')  # type: ignore
 
-        # Создаем временный объект Order для расчета цены
-        temp_order = Order(
-            service=service_id,
-            service_option=service_option_obj,
-            user=value,
-            quantity=quantity,
-            custom_data={}
-        )
+            # Проверяем наличие данных
+            if not service_option_id:
+                raise serializers.ValidationError({"service_option": "Необходимо указать опцию сервиса."})
 
-        total_price = temp_order.calculate_total_price()
+            if not quantity or int(quantity) <= 0:
+                raise serializers.ValidationError({"quantity": "Количество должно быть больше 0."})
 
-        # Можешь использовать эту информацию для дополнительной валидации
-        if value.balance < total_price:
-            raise serializers.ValidationError("У вас недостаточно средств для совершения покупки")
+            # Получаем объекты Service и ServiceOption
+            try:
+                service_option = ServiceOption.objects.get(id=service_option_id)
+            except ServiceOption.DoesNotExist:
+                raise serializers.ValidationError({"service_option": "Указанная опция сервиса не существует."})
 
-        value.balance -= total_price
-        value.save()
+            try:
+                service = Service.objects.get(id=service_id)
+            except Service.DoesNotExist:
+                raise serializers.ValidationError({"service": "Указанный сервис не существует."})
 
-        return value
+            # Создаём временный объект Order для расчёта цены
+            temp_order = Order(
+                service=service,
+                service_option=service_option,
+                user=value,
+                quantity=quantity,
+                custom_data={}
+            )
+
+            total_price = temp_order.calculate_total_price()
+
+            # Проверяем баланс пользователя
+            if value.balance < total_price:
+                raise serializers.ValidationError({"balance": "У вас недостаточно средств для совершения покупки."})
+
+            # Списываем сумму (если всё успешно)
+            value.balance -= total_price
+            value.save()
+
+            return value
+
+        except serializers.ValidationError as e:
+            # Логируем ошибки и возвращаем их пользователю
+            logger.error(f"Ошибка валидации: {e.detail}")
+            raise
+
+        except Exception as e:
+            # Логируем неожиданные ошибки
+            logger.error(f"Непредвиденная ошибка: {str(e)}")
+            raise serializers.ValidationError({"detail": "Произошла ошибка при проверке баланса."})
