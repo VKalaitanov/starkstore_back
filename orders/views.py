@@ -27,15 +27,11 @@ class OrderCreateView(CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def handle_exception(self, exc):
-        """Обрабатываем исключения и приводим ошибки к единому формату"""
-        response = exception_handler(exc, self.context)
-
-        if response is not None:
-            # Все ошибки возвращаем с полем "detail" для фронтенда
-            response.data = {"detail": response.data}
-            return response
-
-        return Response({"detail": "Произошла ошибка, попробуйте снова."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        context = {'view': self, 'request': self.request}
+        response = exception_handler(exc, context)
+        if response is None:
+            return super().handle_exception(exc)
+        return response
 
     def perform_create(self, serializer):
         """Создание заказа с логированием и обработкой ошибок"""
