@@ -66,18 +66,18 @@ class GlobalMessageView(APIView):
             # Проверяем, закрыто ли это сообщение пользователем
             user_message_status = UserGlobalMessageStatus.objects.filter(user=request.user, message=message).first()
             if user_message_status and user_message_status.is_closed:
-                return Response({"message": "Message closed by user"})
+                return Response({"detail": "Message closed by user"})
 
             # Если сообщение активно, возвращаем его
             return Response(GlobalMessageSerializer(message).data)
 
-        return Response({"message": "No active global messages"})
+        return Response({"detail": "No active global messages"})
 
     def post(self, request, *args, **kwargs):
         message_id = request.data.get('id')
 
         if not message_id:
-            return Response({"error": "Message ID is required"}, status=400)
+            return Response({"detail": "Message ID is required"}, status=400)
 
         message = GlobalMessage.objects.filter(id=message_id, is_active=True).first()
 
@@ -90,6 +90,6 @@ class GlobalMessageView(APIView):
             user_message_status.is_closed = True
             user_message_status.save()
 
-            return Response({"status": "Message closed for user"})
+            return Response({"detail": "Message closed for user"})
 
-        return Response({"error": "Message not found or already inactive"}, status=404)
+        return Response({"detail": "Message not found or already inactive"}, status=404)
