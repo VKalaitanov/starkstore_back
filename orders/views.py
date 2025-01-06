@@ -30,6 +30,11 @@ class OrderCreateView(CreateAPIView):
         response = exception_handler(exc, self.get_renderer_context())
         if response is None:
             return super().handle_exception(exc)
+
+        # Добавляем логирование
+        if isinstance(exc, serializers.ValidationError):
+            logger.error(f"Ошибка валидации: {exc.detail}")
+
         return response
 
     def perform_create(self, serializer):

@@ -41,7 +41,7 @@ class Order(models.Model):
             discounted_price = self.service_option.get_discounted_price(user=self.user)
             return Money(discounted_price * self.quantity, currency="USD")
         except Exception as e:
-            raise ValueError(f"Ошибка при расчёте цены: {str(e)}")
+            raise ValueError({"detail":f"Ошибка при расчёте цены: {str(e)}"})
 
     def save(self, *args, **kwargs):
         # Устанавливаем период, если он не передан
@@ -50,7 +50,7 @@ class Order(models.Model):
 
         # Проверяем интервал
         if self.service_option.is_interval_required and not self.interval:
-            raise ValueError("Для выбранной опции требуется указать интервал.")
+            raise ValueError({"detail":"Для выбранной опции требуется указать интервал."})
 
         # Если интервал не требуется, устанавливаем его в None (вместо 1)
         if not self.service_option.is_interval_required:
@@ -58,6 +58,9 @@ class Order(models.Model):
 
         # Рассчитываем общую стоимость
         self.total_price = self.calculate_total_price()
+
+        if self.user.balance < self.total_price:
+            raise ValueError({"detail": "У пользователя недостаточно средств для завершения покупки."})
 
         super(Order, self).save(*args, **kwargs)
 
