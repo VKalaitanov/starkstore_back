@@ -24,6 +24,7 @@ class Order(models.Model):
     period = models.CharField(max_length=50, blank=True, null=True, choices=ServiceOption.PeriodChoices.choices,
                               default=ServiceOption.PeriodChoices.HOUR, verbose_name='Период')
     interval = models.PositiveIntegerField(
+        default=1,
         null=True,
         blank=True,
         verbose_name="Интервал (1-60)",
@@ -49,9 +50,9 @@ class Order(models.Model):
         if self.service_option.is_interval_required and not self.interval:
             raise ValueError("Для выбранной опции требуется указать интервал.")
 
-        # Если интервал не требуется, устанавливаем его в None
+        # Если интервал не требуется, устанавливаем его в None (вместо 1)
         if not self.service_option.is_interval_required:
-            self.interval = 1
+            self.interval = None
 
         # Рассчитываем общую стоимость
         self.total_price = self.calculate_total_price()

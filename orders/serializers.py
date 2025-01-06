@@ -53,6 +53,10 @@ class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
         if not service_option.is_interval_required and data.get('interval') is not None:
             raise serializers.ValidationError({"detail": "Для выбранной опции интервал не нужен."})
 
+        # Устанавливаем значение interval в None, если оно не требуется
+        if not service_option.is_interval_required:
+            data['interval'] = None
+
         return data
 
     def create(self, validated_data):

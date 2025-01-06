@@ -1,11 +1,15 @@
+import logging
+
+from rest_framework import status, serializers
 from rest_framework.generics import ListAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import exception_handler
 from users.models import ReplenishmentBalance
 from .models import Order
 from .serializers import OrderGetAllSerializer, OrderCreateSerializer, ReplenishmentBalanceCreateSerializer
-from rest_framework import status
-from rest_framework.response import Response
+
+logger = logging.getLogger(__name__)  # Настройка логгера
 
 
 class OrderGetAllView(ListAPIView):
@@ -32,6 +36,15 @@ class OrderCreateView(CreateAPIView):
             return response
 
         return Response({"detail": "Произошла ошибка, попробуйте снова."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def perform_create(self, serializer):
+        """Создание заказа с логированием и обработкой ошибок"""
+        try:
+            order = serializer.save()  # Сохраняем заказ через сериализатор
+            logger.info(f"Заказ успешно создан: ID={order.id}")
+        except Exception as e:
+            logger.error(f"Ошибка при создании заказа: {str(e)}")
+            raise serializers.ValidationError({"detail": "Не удалось создать заказ. Проверьте данные."})
 
 
 class ReplenishmentBalanceCreateView(CreateAPIView):
