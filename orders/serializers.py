@@ -15,6 +15,7 @@ class OrderGetAllSerializer(serializers.ModelSerializer):
             'id',
             'service',
             'service_option',
+            'custom_data',
             'period',
             'created_at',
             'completed',
