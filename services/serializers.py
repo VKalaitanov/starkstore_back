@@ -54,7 +54,7 @@ class ServiceWithOptionsSerializer(serializers.ModelSerializer):
 class ServiceListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = ['id', 'name', 'icon_service']
+        fields = ['id', 'name', 'icon_service', 'icon_svg']
 
 
 class CategorySerializer(serializers.Serializer):
