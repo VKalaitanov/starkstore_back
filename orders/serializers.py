@@ -24,7 +24,6 @@ class OrderGetAllSerializer(serializers.ModelSerializer):
         ]
 
 
-
 class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     interval = serializers.IntegerField(required=False, allow_null=True, min_value=1, max_value=60, default=None)
@@ -77,4 +76,25 @@ class ReplenishmentBalanceCreateSerializer(serializers.ModelSerializer):
             'user',
             'balance_for_replenishment',
             'email'
+        ]
+
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    service_name = serializers.CharField(source='service.name', read_only=True)
+    option_name = serializers.CharField(source='service_option.name', read_only=True)
+
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'service_name',
+            'option_name',
+            'custom_data',
+            'quantity',
+            'total_price',
+            'status',
+            'period',
+            'interval',
+            'created_at',
+            'notes',
         ]

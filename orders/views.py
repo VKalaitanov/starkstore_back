@@ -1,10 +1,10 @@
 import logging
 
-from rest_framework import status, serializers
+from rest_framework import serializers
 from rest_framework.generics import ListAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import exception_handler
+from rest_framework.views import exception_handler, APIView
+
 from users.models import ReplenishmentBalance
 from .models import Order
 from .serializers import OrderGetAllSerializer, OrderCreateSerializer, ReplenishmentBalanceCreateSerializer
@@ -51,3 +51,23 @@ class ReplenishmentBalanceCreateView(CreateAPIView):
     serializer_class = ReplenishmentBalanceCreateSerializer
     queryset = ReplenishmentBalance
     permission_classes = [IsAuthenticated]
+
+
+class OrderDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, id_order):
+        try:
+            # Пытаемся получить заказ по id
+            order = Order.objects.get(pk=id_order, user=request.user)
+        except Order.DoesNotExist:
+            logger.error(f"Заказ с ID={id_order} не найден или недоступен пользователю {request.user}.")
+            return Response({"detail": f"Заказ с ID={id_order} не найден."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Ошибка при получении заказа: {str(e)}")
+            return Response({"detail": "Произошла ошибка при обработке запроса."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Сериализуем и возвращаем данные заказа
+        serializer = OrderDetailSerializer(order)
+        return Response(serializer.data, status=status.HTTP_200_OK)
