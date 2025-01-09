@@ -53,7 +53,7 @@ class OrderAdmin(admin.ModelAdmin):
     ]
 
     list_display_links = list_display
-    search_fields = ['user']
+    search_fields = ['user__email']
 
     def get_fields(self, request, obj=None):
         fields = super().get_fields(request, obj)
