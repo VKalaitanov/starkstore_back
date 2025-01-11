@@ -9,11 +9,13 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
     points = serializers.StringRelatedField(many=True)
     price_per_unit = serializers.DecimalField(source='price_per_unit.amount', max_digits=15, decimal_places=2)
     interval = serializers.IntegerField(required=False, allow_null=True)
+    video_link = serializers.URLField(read_only=True)
 
     class Meta:
         model = ServiceOption
         fields = [
             'id',
+            'video_link',
             'category',
             'price_per_unit',
             'discount_percentage',

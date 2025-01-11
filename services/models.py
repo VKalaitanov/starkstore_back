@@ -25,6 +25,9 @@ class ServiceOption(models.Model):
         WEEK = 'Week'
         MONTH = 'Month'
 
+    video_link = models.URLField(max_length=500, blank=True, null=True, verbose_name="Ссылка на видео",
+                                    help_text="Ссылка на видео")
+
     service = models.ForeignKey(Service, related_name='options', on_delete=models.CASCADE,
                                 verbose_name="Название сервиса")
 
