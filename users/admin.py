@@ -61,7 +61,7 @@ class AdminCustomerUser(admin.ModelAdmin):
         orders = obj.orders.filter(status='pending')
         if orders:
             links = [
-                f"<a href='https://starkstore.com/order/{order.pk}/'>{order.service_option}</a>"
+                f"<a href='https://project-pit.ru/api/admin/orders/order/{order.pk}/change/'>{order.service_option}</a>"
                 for order in orders
             ]
             return mark_safe(", ".join(links))
