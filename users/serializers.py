@@ -1,7 +1,6 @@
-from rest_framework import serializers
 from djoser.serializers import UserCreatePasswordRetypeSerializer, SetUsernameSerializer
-from .models import CustomerUser, GlobalMessage
-
+from .models import CustomerUser, GlobalMessage, BalanceHistory
+from rest_framework import serializers
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -43,3 +42,8 @@ class GlobalMessageSerializer(serializers.ModelSerializer):
         instance.is_active = False  # Деактивируем сообщение
         instance.save()
         return instance
+
+class BalanceHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BalanceHistory
+        fields = ['old_balance', 'new_balance', 'create_time']
