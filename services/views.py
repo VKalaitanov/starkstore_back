@@ -1,11 +1,13 @@
+from django.http import Http404
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.http import Http404
-from .models import Service
+
+from .models import Service, PopularServiceOption
 from .models import ServiceOption
 from .serializers import (
     ServiceListSerializer,
-    ServiceOptionSerializer
+    ServiceOptionSerializer, PopularServiceOptionSerializer
 )
 
 
@@ -96,3 +98,12 @@ class CalculateOrderPriceView(APIView):
         return Response({
             "total_price": round(total_price, 2),  # Округляем до двух знаков
         })
+
+
+class PopularServiceOptionListView(APIView):
+    """Вывод списка популярных услуг."""
+
+    def get(self, request):
+        popular_services = PopularServiceOption.objects.all()
+        serializer = PopularServiceOptionSerializer(popular_services, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

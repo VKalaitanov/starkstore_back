@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .forms import ServiceOptionAdminForm
 
-from .models import Service, ServiceOption, RequiredField, PointsServiceOption
+from .models import Service, ServiceOption, RequiredField, PointsServiceOption, PopularServiceOption
 
 admin.site.register(Service)
 admin.site.register(RequiredField)
@@ -22,5 +22,11 @@ class ServiceOptionAdmin(admin.ModelAdmin):
                 fields.remove('interval')
         return fields
 
+from django.contrib import admin
+
+@admin.register(PopularServiceOption)
+class PopularServiceOptionAdmin(admin.ModelAdmin):
+    list_display = ('service_option', 'created_at')
+    search_fields = ('service_option__category', 'service_option__service__name')
 
 admin.site.register(ServiceOption, ServiceOptionAdmin)

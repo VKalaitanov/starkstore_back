@@ -25,9 +25,7 @@ class ServiceOption(models.Model):
         WEEK = 'Week'
         MONTH = 'Month'
 
-    video_link = models.URLField(max_length=500, blank=True, null=True, verbose_name="Ссылка на видео",
-                                    help_text="Ссылка на видео")
-
+    video_link = models.URLField(max_length=500, blank=True, null=True, verbose_name="Ссылка на видео")
     service = models.ForeignKey(Service, related_name='options', on_delete=models.CASCADE,
                                 verbose_name="Название сервиса")
 
@@ -119,3 +117,29 @@ class PointsServiceOption(models.Model):
     class Meta:
         verbose_name = "Пункты для опции"
         verbose_name_plural = "Пункты для опций"
+
+
+class PopularServiceOption(models.Model):
+    service_option = models.ForeignKey(
+        ServiceOption,
+        on_delete=models.CASCADE,
+        related_name='popular_options',
+        verbose_name="Популярная услуга"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата добавления")
+
+    def get_icon(self):
+        """Возвращает иконку из модели Service."""
+        service = self.service_option.service
+        if service.icon_svg:
+            return service.icon_svg
+        elif service.icon_service:
+            return service.icon_service
+        return None
+
+    def __str__(self):
+        return f"Популярная услуга: {self.service_option}"
+
+    class Meta:
+        verbose_name = "Популярная услуга"
+        verbose_name_plural = "Популярные услуги"

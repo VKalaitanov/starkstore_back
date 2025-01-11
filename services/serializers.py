@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Service, ServiceOption
+from .models import Service, ServiceOption, PopularServiceOption
 from rest_framework.exceptions import ValidationError
 
 class ServiceOptionSerializer(serializers.ModelSerializer):
@@ -64,3 +64,14 @@ class CategorySerializer(serializers.Serializer):
 
     class Meta:
         fields = ['category']
+
+
+class PopularServiceOptionSerializer(serializers.ModelSerializer):
+    icon = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PopularServiceOption
+        fields = ['id', 'service_option', 'icon']
+
+    def get_icon(self, obj):
+        return obj.get_icon()
