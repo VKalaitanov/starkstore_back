@@ -69,7 +69,7 @@ class CategorySerializer(serializers.Serializer):
 class PopularServiceOptionSerializer(serializers.ModelSerializer):
     icon = serializers.SerializerMethodField()
     service_id = serializers.IntegerField(source='service_option.service.id', read_only=True)
-    category_name = serializers.IntegerField(source='service_option.category', read_only=True)
+    category_name = serializers.CharField(source='service_option.category', read_only=True)
 
     class Meta:
         model = PopularServiceOption
