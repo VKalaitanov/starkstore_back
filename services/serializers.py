@@ -73,7 +73,7 @@ class PopularServiceOptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PopularServiceOption
-        fields = ['id', 'service_option', 'service_id', 'category_name', 'icon']
+        fields = ['id', 'service_id', 'category_name', 'icon']
 
     def get_icon(self, obj):
         return obj.get_icon()
