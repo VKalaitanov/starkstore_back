@@ -68,10 +68,12 @@ class CategorySerializer(serializers.Serializer):
 
 class PopularServiceOptionSerializer(serializers.ModelSerializer):
     icon = serializers.SerializerMethodField()
+    service_name = serializers.CharField(source='service_option.name', read_only=True)
+    category_id = serializers.IntegerField(source='service_option.category.id', read_only=True)
 
     class Meta:
         model = PopularServiceOption
-        fields = ['id', 'service_option', 'icon']
+        fields = ['id', 'service_option', 'service_name', 'category_id', 'icon']
 
     def get_icon(self, obj):
         return obj.get_icon()
