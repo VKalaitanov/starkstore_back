@@ -1,12 +1,11 @@
 from django.urls import path
-
-from services.views import ServiceListView, ServiceCategoryListView, ServiceOptionListView, CalculateOrderPriceView
+from . import views
 
 urlpatterns = [
-    path('services/', ServiceListView.as_view(), name='service-list'),
-    path('services/<int:service_id>/categories/', ServiceCategoryListView.as_view(), name='service-category-list'),
-    path('services/<int:service_id>/categories/<str:category>/', ServiceOptionListView.as_view(),
+    path('services/', views.ServiceListView.as_view(), name='service-list'),
+    path('services/<int:service_id>/categories/', views.ServiceCategoryListView.as_view(), name='service-category-list'),
+    path('services/<int:service_id>/categories/<str:category>/', views.ServiceOptionListView.as_view(),
          name='service-option-list'),
-    path('popular-services/', ServiceOptionListView.as_view(), name='popular-service-detail'),
-    path('calculate-price/', CalculateOrderPriceView.as_view(), name='calculate-price'),
+    path('popular-services/', views.PopularServiceOptionListView.as_view(), name='popular-service-detail'),
+    path('calculate-price/', views.CalculateOrderPriceView.as_view(), name='calculate-price'),
 ]
