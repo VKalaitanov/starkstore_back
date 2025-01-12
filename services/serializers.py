@@ -10,12 +10,14 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
     price_per_unit = serializers.DecimalField(source='price_per_unit.amount', max_digits=15, decimal_places=2)
     interval = serializers.IntegerField(required=False, allow_null=True)
     video_link = serializers.URLField(read_only=True)
+    service_name = serializers.CharField(source='service_option.service.name', read_only=True)
 
     class Meta:
         model = ServiceOption
         fields = [
             'id',
             'video_link',
+            'service_name',
             'category',
             'price_per_unit',
             'discount_percentage',
@@ -69,11 +71,12 @@ class CategorySerializer(serializers.Serializer):
 class PopularServiceOptionSerializer(serializers.ModelSerializer):
     icon = serializers.SerializerMethodField()
     service_id = serializers.IntegerField(source='service_option.service.id', read_only=True)
+    service_name = serializers.CharField(source='service_option.service.name', read_only=True)
     category_name = serializers.CharField(source='service_option.category', read_only=True)
 
     class Meta:
         model = PopularServiceOption
-        fields = ['id', 'service_id', 'category_name', 'icon']
+        fields = ['id', 'service_id', 'service_name', 'category_name', 'icon']
 
     def get_icon(self, obj):
         return obj.get_icon()
