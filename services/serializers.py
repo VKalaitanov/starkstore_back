@@ -10,7 +10,7 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
     price_per_unit = serializers.DecimalField(source='price_per_unit.amount', max_digits=15, decimal_places=2)
     interval = serializers.IntegerField(required=False, allow_null=True)
     video_link = serializers.URLField(read_only=True)
-    service_name = serializers.CharField(source='service_option.service.name', read_only=True)
+    service_name = serializers.CharField(source='service.name', read_only=True)
 
     class Meta:
         model = ServiceOption
