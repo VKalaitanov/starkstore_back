@@ -11,7 +11,6 @@ from rest_framework.views import APIView
 
 from .models import BalanceTopUp, CustomerUser, GlobalMessage, UserGlobalMessageStatus, BalanceHistory
 from .serializers import BalanceTopUpSerializer, GlobalMessageSerializer, BalanceHistorySerializer
-import httpx
 
 class ActivateUser(APIView):
     def get(self, request, uid, token):
