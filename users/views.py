@@ -92,27 +92,30 @@ class CreateTopUpView(APIView):
         if not amount or float(amount) <= 0:
             return Response({'detail': 'Сумма должна быть больше 0'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Генерация счета через API Plisio
-        response = requests.post(
-            'https://api.plisio.net/api/v1/invoices',
-            params={'api_key': settings.PLISIO_API_KEY},
-            json={
-                'amount': amount,
-                'currency': 'USD',
-                'description': 'Пополнение баланса',
-                'callback_url': f'https://project-pit.ru/api/v1/user/plisio-webhook/',
-                'email': user.email,
-            },
-            headers={'Content-Type': 'application/json'}
-        )
-
-        # Проверка ответа
-        if response.status_code != 200:
-            return Response({'detail': 'Ошибка при создании счета в Plisio'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            response = requests.post(
+                'https://api.plisio.net/api/v1/invoices',
+                params={'api_key': settings.PLISIO_API_KEY},
+                json={
+                    'amount': amount,
+                    'currency': 'USD',
+                    'description': 'Пополнение баланса',
+                    'callback_url': f'https://project-pit.ru/api/v1/user/plisio-webhook/',
+                    'email': user.email,
+                },
+                headers={'Content-Type': 'application/json'}
+            )
+            response.raise_for_status()  # Бросает исключение, если статус не 2xx
+        except requests.RequestException as e:
+            logger.error(f"Plisio request failed: {str(e)}")
+            return Response({'detail': 'Ошибка при создании счета в Plisio'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         response_data = response.json()
         if response_data.get('status') != 'success':
-            return Response({'detail': response_data.get('message', 'Ошибка при создании счета')}, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(f"Plisio response: {response_data}")
+            return Response({'detail': response_data.get('message', 'Ошибка при создании счета')},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         invoice_data = response_data['data']
         invoice_id = invoice_data['id']
