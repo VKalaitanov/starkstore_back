@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from .views import OrderGetAllView, OrderCreateView, ReplenishmentBalanceCreateView, OrderDetailView
 
 urlpatterns = [
@@ -6,4 +6,5 @@ urlpatterns = [
     path('create/', OrderCreateView.as_view()),
     path('balance/', ReplenishmentBalanceCreateView.as_view()),
     path('<int:id_order>/', OrderDetailView.as_view()),
+    path('payment/', include('orders.payment.urls')),
 ]

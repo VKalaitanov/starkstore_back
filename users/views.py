@@ -1,13 +1,16 @@
+import requests
+from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlsafe_base64_decode
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import GlobalMessage, UserGlobalMessageStatus, BalanceHistory, CustomerUser
-from .serializers import GlobalMessageSerializer, BalanceHistorySerializer
+from .models import BalanceTopUp, CustomerUser, GlobalMessage, UserGlobalMessageStatus, BalanceHistory
+from .serializers import BalanceTopUpSerializer, GlobalMessageSerializer, BalanceHistorySerializer
 
 
 class ActivateUser(APIView):
@@ -75,3 +78,73 @@ class BalanceHistoryView(generics.ListAPIView):
 
     def get_queryset(self):
         return BalanceHistory.objects.filter(user=self.request.user).order_by('-create_time')
+
+
+class CreateTopUpView(APIView):
+    """Создание запроса на пополнение"""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        amount = request.data.get('amount')
+
+        if not amount or float(amount) <= 0:
+            return Response({'detail': 'Сумма должна быть больше 0'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Генерация счета через API Plisio
+        response = requests.post(
+            'https://plisio.net/api/v1/invoices',
+            headers={'Authorization': f'Bearer {settings.PLISIO_API_KEY}'},
+            json={
+                'amount': amount,
+                'currency': 'USD',
+                'description': 'Пополнение баланса',
+                'callback_url': f'https://project-pit.ru/api/v1/user/plisio-webhook/',
+                'email': user.email,
+            }
+        )
+
+        if response.status_code != 200:
+            return Response({'detail': 'Ошибка при создании счета в Plisio'}, status=status.HTTP_400_BAD_REQUEST)
+
+        invoice_data = response.json()
+        invoice_id = invoice_data['data']['id']
+
+        # Создаем запись в базе
+        top_up = BalanceTopUp.objects.create(
+            user=user,
+            amount=amount,
+            invoice_id=invoice_id,
+            status='pending',
+        )
+
+        return Response(BalanceTopUpSerializer(top_up).data, status=status.HTTP_201_CREATED)
+
+
+class PlisioWebhookView(APIView):
+    """Обработка уведомлений от Plisio"""
+
+    def post(self, request):
+        data = request.data
+        invoice_id = data.get('id')
+        status = data.get('status')
+
+        try:
+            top_up = BalanceTopUp.objects.get(invoice_id=invoice_id)
+        except BalanceTopUp.DoesNotExist:
+            return Response({'detail': 'Счет не найден'}, status=status.HTTP_404_NOT_FOUND)
+
+        if status == 'completed':
+            top_up.status = 'paid'
+            top_up.save()
+
+            # Пополняем баланс пользователя
+            user = top_up.user
+            user.balance += top_up.amount
+            user.save()
+
+        elif status == 'failed':
+            top_up.status = 'failed'
+            top_up.save()
+
+        return Response({'status': 'success'})

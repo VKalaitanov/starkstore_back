@@ -1,7 +1,8 @@
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
-from django.contrib.auth.models import AbstractUser
-from django.contrib.auth.models import BaseUserManager
+from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
+
 from services.models import ServiceOption
 
 
@@ -145,3 +146,33 @@ class UserGlobalMessageStatus(models.Model):
 
     class Meta:
         unique_together = ('user', 'message')  # Чтобы каждый пользователь мог закрыть только одно сообщение один раз
+
+
+class BalanceTopUp(models.Model):
+    """Модель для хранения запросов на пополнение баланса"""
+    user = models.ForeignKey(
+        'CustomerUser', on_delete=models.CASCADE, related_name='top_up_requests'
+    )
+    amount = MoneyField(
+        decimal_places=2, default_currency='USD', max_digits=15, verbose_name=_("Сумма")
+    )
+    invoice_id = models.CharField(max_length=255, unique=True, verbose_name=_("ID счета"))
+    status = models.CharField(
+        max_length=20,
+        choices=(
+            ('pending', _("В ожидании")),
+            ('paid', _("Оплачено")),
+            ('failed', _("Неудачно")),
+        ),
+        default='pending',
+        verbose_name=_("Статус"),
+    )
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name=_("Время создания"))
+    update_time = models.DateTimeField(auto_now=True, verbose_name=_("Время обновления"))
+
+    class Meta:
+        verbose_name = _("Пополнение баланса")
+        verbose_name_plural = _("Пополнения баланса")
+
+    def __str__(self):
+        return f"{self.user.email} - {self.amount} - {self.status}"

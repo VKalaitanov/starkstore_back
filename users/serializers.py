@@ -1,5 +1,5 @@
 from djoser.serializers import UserCreatePasswordRetypeSerializer, SetUsernameSerializer
-from .models import CustomerUser, GlobalMessage, BalanceHistory
+from .models import CustomerUser, GlobalMessage, BalanceHistory, BalanceTopUp
 from rest_framework import serializers
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -47,3 +47,10 @@ class BalanceHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = BalanceHistory
         fields = ['old_balance', 'new_balance', 'create_time']
+
+
+class BalanceTopUpSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BalanceTopUp
+        fields = ['id', 'user', 'amount', 'invoice_id', 'status', 'create_time']
+        read_only_fields = ['id', 'invoice_id', 'status', 'create_time']
