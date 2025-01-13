@@ -6,5 +6,4 @@ urlpatterns = [
     path('create/', OrderCreateView.as_view()),
     path('balance/', ReplenishmentBalanceCreateView.as_view()),
     path('<int:id_order>/', OrderDetailView.as_view()),
-    path('payment/', include('orders.payment.urls')),
 ]
