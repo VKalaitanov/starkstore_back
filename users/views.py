@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from .models import BalanceTopUp, CustomerUser, GlobalMessage, UserGlobalMessageStatus, BalanceHistory
 from .serializers import BalanceTopUpSerializer, GlobalMessageSerializer, BalanceHistorySerializer
-
+import httpx
 
 class ActivateUser(APIView):
     def get(self, request, uid, token):
@@ -79,12 +79,14 @@ class BalanceHistoryView(generics.ListAPIView):
     def get_queryset(self):
         return BalanceHistory.objects.filter(user=self.request.user).order_by('-create_time')
 
+import logging
 
+logger = logging.getLogger(__name__)
 class CreateTopUpView(APIView):
-    """Создание запроса на пополнение"""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        logger.error(f"Request data: {request.data}")
         user = request.user
         amount = request.data.get('amount')
 
@@ -93,22 +95,28 @@ class CreateTopUpView(APIView):
 
         # Генерация счета через API Plisio
         response = requests.post(
-            'https://plisio.net/api/v1/invoices',
-            headers={'Authorization': f'Bearer {settings.PLISIO_API_KEY}'},
+            'https://api.plisio.net/api/v1/invoices',
+            params={'api_key': settings.PLISIO_API_KEY},
             json={
                 'amount': amount,
                 'currency': 'USD',
                 'description': 'Пополнение баланса',
                 'callback_url': f'https://project-pit.ru/api/v1/user/plisio-webhook/',
                 'email': user.email,
-            }
+            },
+            headers={'Content-Type': 'application/json'}
         )
 
+        # Проверка ответа
         if response.status_code != 200:
             return Response({'detail': 'Ошибка при создании счета в Plisio'}, status=status.HTTP_400_BAD_REQUEST)
 
-        invoice_data = response.json()
-        invoice_id = invoice_data['data']['id']
+        response_data = response.json()
+        if response_data.get('status') != 'success':
+            return Response({'detail': response_data.get('message', 'Ошибка при создании счета')}, status=status.HTTP_400_BAD_REQUEST)
+
+        invoice_data = response_data['data']
+        invoice_id = invoice_data['id']
 
         # Создаем запись в базе
         top_up = BalanceTopUp.objects.create(
@@ -148,3 +156,4 @@ class PlisioWebhookView(APIView):
             top_up.save()
 
         return Response({'status': 'success'})
+
