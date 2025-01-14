@@ -167,6 +167,18 @@ class BalanceTopUp(models.Model):
         default='pending',
         verbose_name=_("Статус"),
     )
+    order_number = models.CharField(
+        max_length=255,
+        unique=True,
+        verbose_name=_("Номер заказа"),
+        help_text=_("Уникальный номер заказа для Plisio"),
+    )
+    currency = models.CharField(
+        max_length=10,
+        verbose_name=_("Валюта"),
+        default='USD',
+        help_text=_("Валюта пополнения"),
+    )
     create_time = models.DateTimeField(auto_now_add=True, verbose_name=_("Время создания"))
     update_time = models.DateTimeField(auto_now=True, verbose_name=_("Время обновления"))
 

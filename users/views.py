@@ -88,6 +88,8 @@ class CreateTopUpView(APIView):
         logger.error(f"Request data: {request.data}")
         user = request.user
         amount = request.data.get('amount')
+        import uuid
+        order_number = str(uuid.uuid4())
 
         if not amount or float(amount) <= 0:
             return Response({'detail': 'Сумма должна быть больше 0'}, status=status.HTTP_400_BAD_REQUEST)
@@ -102,6 +104,7 @@ class CreateTopUpView(APIView):
                     'description': 'Пополнение баланса',
                     'callback_url': f'https://project-pit.ru/api/v1/user/plisio-webhook/',
                     'email': user.email,
+                    'order_number': order_number,
                 },
                 headers={'Content-Type': 'application/json'}
             )
@@ -125,6 +128,7 @@ class CreateTopUpView(APIView):
             user=user,
             amount=amount,
             invoice_id=invoice_id,
+            order_number=order_number,
             status='pending',
         )
 
@@ -157,5 +161,5 @@ class PlisioWebhookView(APIView):
             top_up.status = 'failed'
             top_up.save()
 
-        return Response({'status': 'success'})
+        return Response({'detail': 'success'})
 
