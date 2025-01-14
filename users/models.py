@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -169,6 +171,7 @@ class BalanceTopUp(models.Model):
     )
     order_number = models.CharField(
         max_length=255,
+        default=uuid.uuid4,
         unique=True,
         verbose_name=_("Номер заказа"),
         help_text=_("Уникальный номер заказа для Plisio"),
