@@ -96,7 +96,7 @@ class CreateTopUpView(APIView):
 
         try:
             response = requests.post(
-                'https://api.plisio.net/api/v1/invoices/new',
+                'https://api.plisio.net/api/v1/invoices',
                 params={'api_key': settings.PLISIO_API_KEY},
                 json={
                     'amount': amount,
