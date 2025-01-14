@@ -106,4 +106,4 @@ class PopularServiceOptionListView(APIView):
     def get(self, request):
         popular_services = PopularServiceOption.objects.all()
         serializer = PopularServiceOptionSerializer(popular_services, many=True)
-        return Response({'detail': serializer.data}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
