@@ -101,10 +101,9 @@ class CreateTopUpView(APIView):
                 json={
                     'amount': amount,
                     'currency': 'USD',
-                    'description': 'Пополнение баланса',
-                    'callback_url': f'https://project-pit.ru/api/v1/user/plisio-webhook/',
-                    'email': user.email,
-                    'order_number': order_number,
+                    'callback_url': f'https://project-pit.ru/api/v1/user/plisio-webhook/'
+                    # 'email': user.email,
+                    # 'order_number': order_number,
                 },
                 headers={'Content-Type': 'application/json'}
             )
@@ -162,4 +161,5 @@ class PlisioWebhookView(APIView):
             top_up.save()
 
         return Response({'detail': 'success'})
+
 
