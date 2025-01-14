@@ -173,6 +173,8 @@ class BalanceTopUp(models.Model):
         max_length=255,
         default=uuid.uuid4,
         unique=True,
+        null=True,
+        blank=True,
         verbose_name=_("Номер заказа"),
         help_text=_("Уникальный номер заказа для Plisio"),
     )
