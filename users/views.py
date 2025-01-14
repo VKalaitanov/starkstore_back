@@ -104,7 +104,7 @@ class CreateTopUpView(APIView):
                     'description': 'Пополнение баланса',
                     'callback_url': f'https://project-pit.ru/api/v1/user/plisio-webhook/',
                     'email': user.email,
-                    # 'order_number': order_number,
+                    'order_number': order_number,
                 },
                 headers={'Content-Type': 'application/json'}
             )
