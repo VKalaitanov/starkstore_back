@@ -169,15 +169,15 @@ class BalanceTopUp(models.Model):
         default='pending',
         verbose_name=_("Статус"),
     )
-    order_number = models.CharField(
-        max_length=255,
-        default=uuid.uuid4,
-        unique=True,
-        null=True,
-        blank=True,
-        verbose_name=_("Номер заказа"),
-        help_text=_("Уникальный номер заказа для Plisio"),
-    )
+    # order_number = models.CharField(
+    #     max_length=255,
+    #     default=uuid.uuid4,
+    #     unique=True,
+    #     null=True,
+    #     blank=True,
+    #     verbose_name=_("Номер заказа"),
+    #     help_text=_("Уникальный номер заказа для Plisio"),
+    # )
     currency = models.CharField(
         max_length=10,
         verbose_name=_("Валюта"),
