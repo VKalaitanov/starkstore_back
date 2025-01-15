@@ -94,26 +94,29 @@ class CreateTopUpView(APIView):
         logger.error(f"Request data: {request.data}")
         user = request.user
         amount = request.data.get('amount')
-        import uuid
         order_number = str(uuid.uuid4())
 
         if not amount or float(amount) <= 0:
             return Response({'detail': 'Сумма должна быть больше 0'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Параметры запроса
+        params = {
+            'source_currency': 'USD',  # Основная валюта
+            'source_amount': amount,  # Сумма
+            'order_number': order_number,  # Уникальный номер заказа
+            'currency': 'BTC',  # Валюта оплаты
+            'email': user.email,  # Email пользователя
+            'order_name': 'Top Up Balance',  # Название заказа
+            'callback_url': 'https://project-pit.ru/api/v1/user/plisio-webhook/',  # URL для уведомлений
+            'api_key': settings.PLISIO_API_KEY,  # API ключ Plisio
+        }
+
         try:
-            response = requests.post(
+            # Выполняем GET-запрос к API Plisio
+            response = requests.get(
                 'https://api.plisio.net/api/v1/invoices/new',
-                json={
-                    'amount': amount,
-                    'source_currency': 'USD',  # Ваша основная валюта
-                    'currency': 'BTC',  # Валюта оплаты
-                    'callback_url': 'https://project-pit.ru/api/v1/user/plisio-webhook/',
-                    'order_number': order_number,
-                    'email': user.email,
-                    'order_name': 'Пополнение баланса',
-                },
-                headers={'Content-Type': 'application/json'},
-                params={'api_key': settings.PLISIO_API_KEY},
+                params=params,
+                headers={'Content-Type': 'application/json'}
             )
             response.raise_for_status()  # Бросает исключение, если статус не 2xx
         except requests.RequestException as e:
@@ -128,18 +131,21 @@ class CreateTopUpView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         invoice_data = response_data['data']
-        invoice_id = invoice_data['id']
+        invoice_id = invoice_data.get('txn_id')  # ID транзакции
 
         # Создаем запись в базе
         top_up = BalanceTopUp.objects.create(
             user=user,
             amount=amount,
             invoice_id=invoice_id,
-            # order_number=order_number,
             status='pending',
         )
 
-        return Response(BalanceTopUpSerializer(top_up).data, status=status.HTTP_201_CREATED)
+        # Возвращаем данные счета и URL для оплаты
+        return Response({
+            'invoice_url': invoice_data.get('invoice_url'),
+            'invoice_id': invoice_id,
+        }, status=status.HTTP_201_CREATED)
 
 
 class PlisioWebhookView(APIView):
