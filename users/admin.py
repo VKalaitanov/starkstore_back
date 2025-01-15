@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import CustomerUser, UserServiceDiscount, GlobalMessage
+from .models import CustomerUser, UserServiceDiscount, GlobalMessage, BalanceTopUp
 
 
 @admin.register(CustomerUser)
@@ -149,3 +149,5 @@ class GlobalMessageAdmin(admin.ModelAdmin):
             'classes': ('collapse',)  # Сворачиваем даты
         }),
     )
+
+admin.site.register(BalanceTopUp)
