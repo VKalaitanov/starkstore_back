@@ -96,29 +96,28 @@ class CreateTopUpView(APIView):
         logger.error(f"Request data: {request.data}")
         user = request.user
         amount = request.data.get('amount')
-        order_number = str(uuid.uuid4())
+        order_number = str(uuid.uuid4())  # Генерируем уникальный номер заказа
 
         if not amount or float(amount) <= 0:
             return Response({'detail': 'Сумма должна быть больше 0'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Параметры запроса
+        # Формируем параметры запроса
         params = {
             'source_currency': 'USD',  # Основная валюта
-            'source_amount': amount,  # Сумма
-            'order_number': order_number,  # Уникальный номер заказа
+            'source_amount': amount,
+            'order_number': order_number,
             'currency': 'BTC',  # Валюта оплаты
-            'email': user.email,  # Email пользователя
-            'order_name': 'Top Up Balance',  # Название заказа
-            'callback_url': 'https://project-pit.ru/api/v1/user/plisio-webhook/',  # URL для уведомлений
-            'api_key': settings.PLISIO_API_KEY,  # API ключ Plisio
+            'email': user.email,
+            'order_name': 'Top Up Balance',
+            'callback_url': 'https://project-pit.ru/api/v1/user/plisio-webhook/',
+            'api_key': settings.PLISIO_API_KEY,
         }
 
         try:
-            # Выполняем GET-запрос к API Plisio
+            # Отправляем GET-запрос на Plisio API
             response = requests.get(
                 'https://api.plisio.net/api/v1/invoices/new',
-                params=params,
-                headers={'Content-Type': 'application/json'}
+                params=params
             )
             response.raise_for_status()  # Бросает исключение, если статус не 2xx
         except requests.RequestException as e:
@@ -133,9 +132,9 @@ class CreateTopUpView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
         invoice_data = response_data['data']
-        invoice_id = invoice_data.get('txn_id')  # ID транзакции
+        invoice_id = invoice_data.get('txn_id')  # Идентификатор транзакции от Plisio
 
-        # Создаем запись в базе
+        # Создаем запись в базе данных
         top_up = BalanceTopUp.objects.create(
             user=user,
             amount=amount,
@@ -143,10 +142,10 @@ class CreateTopUpView(APIView):
             status='pending',
         )
 
-        # Возвращаем данные счета и URL для оплаты
         return Response({
+            'id': top_up.id,
             'invoice_url': invoice_data.get('invoice_url'),
-            'invoice_id': invoice_id,
+            'invoice_total_sum': invoice_data.get('invoice_total_sum'),
         }, status=status.HTTP_201_CREATED)
 
 
