@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import json
 import uuid
 
 import requests
@@ -6,15 +9,13 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import generics, permissions
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-import hmac
-import hashlib
-from .models import BalanceTopUp, CustomerUser, GlobalMessage, UserGlobalMessageStatus, BalanceHistory
-from .serializers import BalanceTopUpSerializer, GlobalMessageSerializer, BalanceHistorySerializer
-from rest_framework import status
-import json
+
+from .models import CustomerUser, GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
+from .serializers import GlobalMessageSerializer, BalanceHistorySerializer
 
 
 class ActivateUser(APIView):
@@ -154,25 +155,40 @@ class PlisioWebhookView(APIView):
 
     def post(self, request):
         data = request.data
-        signature = request.headers.get('Signature')
-        expected_signature = hmac.new(
-            settings.PLISIO_API_KEY.encode(),
-            msg=json.dumps(data, sort_keys=True).encode(),
-            digestmod=hashlib.sha256,
-        ).hexdigest()
+        signature = request.headers.get('Signature')  # Получаем заголовок Signature
 
+        # Проверяем, что заголовок Signature присутствует
+        if not signature:
+            return Response({'detail': 'Missing signature header'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Генерируем ожидаемую подпись
+        try:
+            expected_signature = hmac.new(
+                settings.PLISIO_API_KEY.encode(),
+                msg=json.dumps(data, sort_keys=True).encode(),
+                digestmod=hashlib.sha256,
+            ).hexdigest()
+        except Exception as e:
+            return Response({'detail': f'Error generating signature: {str(e)}'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Сравниваем подписи
         if not hmac.compare_digest(signature, expected_signature):
             return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
 
+        # Обработка данных вебхука
         invoice_id = data.get('id')
-        status = data.get('status')
+        status_value = data.get('status')
+
+        if not invoice_id:
+            return Response({'detail': 'Invoice ID is missing'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             top_up = BalanceTopUp.objects.get(invoice_id=invoice_id)
         except BalanceTopUp.DoesNotExist:
             return Response({'detail': 'Счет не найден'}, status=status.HTTP_404_NOT_FOUND)
 
-        if status == 'completed':
+        if status_value == 'completed':
             top_up.status = 'paid'
             top_up.save()
 
@@ -181,7 +197,7 @@ class PlisioWebhookView(APIView):
             user.balance += top_up.amount
             user.save()
 
-        elif status == 'failed':
+        elif status_value == 'failed':
             top_up.status = 'failed'
             top_up.save()
 
