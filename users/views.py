@@ -96,17 +96,18 @@ class CreateTopUpView(APIView):
 
         try:
             response = requests.post(
-                'https://api.plisio.net/api/v1/invoices',
-                params={'api_key': settings.PLISIO_API_KEY},
+                'https://api.plisio.net/api/v1/invoices/new',
                 json={
                     'amount': amount,
-                    'currency': 'USD',
-                    # 'description': 'Пополнение баланса',
-                    'callback_url': f'https://project-pit.ru/api/v1/user/plisio-webhook/'
-                    # 'email': user.email,
-                    # 'order_number': order_number,
+                    'source_currency': 'USD',  # Ваша основная валюта
+                    'currency': 'BTC',  # Валюта оплаты
+                    'callback_url': 'https://project-pit.ru/api/v1/user/plisio-webhook/',
+                    'order_number': order_number,
+                    'email': user.email,
+                    'order_name': 'Пополнение баланса',
                 },
-                headers={'Content-Type': 'application/json'}
+                headers={'Content-Type': 'application/json'},
+                params={'api_key': settings.PLISIO_API_KEY},
             )
             response.raise_for_status()  # Бросает исключение, если статус не 2xx
         except requests.RequestException as e:
@@ -140,6 +141,16 @@ class PlisioWebhookView(APIView):
 
     def post(self, request):
         data = request.data
+        signature = request.headers.get('Signature')
+        expected_signature = hmac.new(
+            settings.PLISIO_API_KEY.encode(),
+            msg=json.dumps(data, sort_keys=True).encode(),
+            digestmod=hashlib.sha256,
+        ).hexdigest()
+
+        if not hmac.compare_digest(signature, expected_signature):
+            return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
+
         invoice_id = data.get('id')
         status = data.get('status')
 

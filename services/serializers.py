@@ -80,3 +80,4 @@ class PopularServiceOptionSerializer(serializers.ModelSerializer):
 
     def get_icon(self, obj):
         return obj.get_icon()
+
