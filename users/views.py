@@ -4,13 +4,16 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import generics, permissions
-from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+import hmac
+import hashlib
 from .models import BalanceTopUp, CustomerUser, GlobalMessage, UserGlobalMessageStatus, BalanceHistory
 from .serializers import BalanceTopUpSerializer, GlobalMessageSerializer, BalanceHistorySerializer
+from rest_framework import status
+import json
+
 
 class ActivateUser(APIView):
     def get(self, request, uid, token):
@@ -78,9 +81,12 @@ class BalanceHistoryView(generics.ListAPIView):
     def get_queryset(self):
         return BalanceHistory.objects.filter(user=self.request.user).order_by('-create_time')
 
+
 import logging
 
 logger = logging.getLogger(__name__)
+
+
 class CreateTopUpView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -173,5 +179,3 @@ class PlisioWebhookView(APIView):
             top_up.save()
 
         return Response({'detail': 'success'})
-
-
