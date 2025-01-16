@@ -5,7 +5,6 @@ import uuid
 
 import requests
 from django.conf import settings
-from django.contrib.admin.utils import unquote
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlsafe_base64_decode
@@ -107,7 +106,7 @@ class CreateTopUpView(APIView):
         # Формируем параметры запроса
         params = {
             'source_currency': 'USD',  # Основная валюта
-            'source_amount': amount,
+            'source_amount': round(float(amount), 2),
             'order_number': order_number,
             'currency': 'BTC',  # Валюта оплаты
             'email': user.email,
@@ -152,91 +151,73 @@ class CreateTopUpView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
-import hashlib
-import hmac
-import logging
-from django.conf import settings
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-
-logger = logging.getLogger(__name__)
-
 class PlisioWebhookView(APIView):
+    """Обработка уведомлений от Plisio"""
+
     def generate_signature(self, data):
+        """
+        Генерация подписи для проверки вебхуков.
+        """
         txn_id = data.get('txn_id', '')
         source_amount = data.get('source_amount', '')
         source_currency = data.get('source_currency', '')
         secret_key = settings.PLISIO_API_KEY
 
-        # Формируем строку без явной кодировки
+        # Формируем строку для подписи
         verification_string = f"{txn_id}{source_amount}{source_currency}{secret_key}"
         logger.info(f"🔑 Строка для подписи: {verification_string}")
 
-        # Генерируем SHA1 хэш
-        signature = hashlib.sha1(verification_string.encode()).hexdigest()
+        # Генерация HMAC с использованием SHA256
+        signature = hmac.new(secret_key.encode(), verification_string.encode(), hashlib.sha256).hexdigest()
         logger.info(f"🔒 Сгенерированная подпись: {signature}")
 
         return signature
 
-    def verify_callback_data(self, post_data, secret_key):
-        # Проверяем, что verify_hash присутствует в данных
-        if 'verify_hash' not in post_data:
-            return False
+    def post(self, request):
+        data = request.data
+        signature = request.headers.get('Signature')  # Получаем заголовок Signature
 
-        verify_hash = post_data['verify_hash']  # Извлекаем verify_hash
-        del post_data['verify_hash']  # Убираем его из данных
+        # Проверяем, что заголовок Signature присутствует
+        if not signature:
+            return Response({'detail': 'Missing signature header'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Сортируем данные по ключам
-        sorted_post_data = {k: post_data[k] for k in sorted(post_data.keys())}
+        # Генерируем ожидаемую подпись
+        try:
+            expected_signature = self.generate_signature(data)
+        except Exception as e:
+            return Response({'detail': f'Error generating signature: {str(e)}'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Преобразуем некоторые поля в строки
-        if 'expire_utc' in sorted_post_data:
-            sorted_post_data['expire_utc'] = str(sorted_post_data['expire_utc'])
-
-        if 'tx_urls' in sorted_post_data:
-            sorted_post_data['tx_urls'] = unquote(sorted_post_data['tx_urls'])
-
-        # Сериализация данных в строку
-        post_string = str(sorted_post_data)
-
-        # Генерация подписи с помощью HMAC-SHA1
-        check_key = hmac.new(secret_key.encode(), post_string.encode(), hashlib.sha1).hexdigest()
-
-        # Сравниваем с полученной подписью
-        if check_key != verify_hash:
-            return False
-
-        return True
-
-    def post(self, request, *args, **kwargs):
-        logger.info("=== Получен вебхук от Plisio ===")
-        logger.info(f"Webhook data: {request.POST}")
-        logger.info(f"Webhook headers: {request.headers}")
-
-        data = request.POST
-        verify_hash = data.get('verify_hash')
-        status_payment = data.get('status')
-        order_number = data.get('order_number')
-
-        # Получаем секретный ключ из настроек
-        secret_key = settings.PLISIO_API_KEY
-
-        if not verify_hash:
-            logger.error("🚨 Отсутствует verify_hash в данных")
-            return Response({'detail': 'Missing verify_hash'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Используем функцию верификации
-        if not self.verify_callback_data(data, secret_key):
-            logger.error("🚨 Неверная подпись")
+        # Сравниваем подписи
+        if not hmac.compare_digest(signature, expected_signature):
             return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
 
-        if status_payment == 'completed':
-            logger.info(f"✅ Платеж успешно завершён: Order {order_number}")
-        elif status_payment == 'expired':
-            logger.warning(f"⚠️ Платёж истёк: Order {order_number}")
-        else:
-            logger.warning(f"⚠️ Неизвестный статус платежа: {status_payment}")
+        # Обработка данных вебхука
+        invoice_id = data.get('id')
+        status_value = data.get('status')
 
-        return Response({'detail': 'Webhook received successfully'}, status=status.HTTP_200_OK)
+        if not invoice_id:
+            return Response({'detail': 'Invoice ID is missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            top_up = BalanceTopUp.objects.get(invoice_id=invoice_id)
+        except BalanceTopUp.DoesNotExist:
+            return Response({'detail': 'Счет не найден'}, status=status.HTTP_404_NOT_FOUND)
+
+        if status_value == 'completed':
+            top_up.status = 'paid'
+            top_up.save()
+
+            # Пополняем баланс пользователя
+            user = top_up.user
+            user.balance += top_up.amount
+            user.save()
+
+        elif status_value == 'failed':
+            top_up.status = 'failed'
+            top_up.save()
+
+        return Response({'detail': 'success'})
+
+
 
