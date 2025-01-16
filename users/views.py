@@ -152,12 +152,21 @@ class CreateTopUpView(APIView):
 
 
 class PlisioWebhookView(APIView):
-    def generate_signature(self, txn_id, source_amount, source_currency):
-        """
-        Генерация подписи для проверки данных от Plisio.
-        """
-        verification_string = f"{txn_id}{source_amount.strip()}{source_currency.strip()}{settings.PLISIO_API_KEY}"
-        return hashlib.sha1(verification_string.encode()).hexdigest()
+    def generate_signature(self, data):
+        txn_id = data.get('txn_id', '')
+        source_amount = data.get('source_amount', '')
+        source_currency = data.get('source_currency', '')
+        secret_key = settings.PLISIO_API_KEY
+
+        # Формируем строку без явной кодировки
+        verification_string = f"{txn_id}{source_amount}{source_currency}{secret_key}"
+        logger.info(f"🔑 Строка для подписи: {verification_string}")
+
+        # Генерируем SHA1 хэш
+        signature = hashlib.sha1(verification_string.encode()).hexdigest()
+        logger.info(f"🔒 Сгенерированная подпись: {signature}")
+
+        return signature
 
     def post(self, request, *args, **kwargs):
         logger.info("=== Получен вебхук от Plisio ===")
@@ -166,18 +175,14 @@ class PlisioWebhookView(APIView):
 
         data = request.POST
         verify_hash = data.get('verify_hash')
-        txn_id = data.get('txn_id')
         status_payment = data.get('status')
-        amount = data.get('source_amount')
-        currency = data.get('source_currency')
         order_number = data.get('order_number')
 
         if not verify_hash:
             logger.error("🚨 Отсутствует verify_hash в данных")
             return Response({'detail': 'Missing verify_hash'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Генерация подписи с помощью отдельного метода
-        generated_hash = self.generate_signature(txn_id, amount, currency)
+        generated_hash = self.generate_signature(data)
 
         logger.info(f"✅ Ожидаемая подпись: {generated_hash}")
         logger.info(f"📨 Подпись из данных: {verify_hash}")
@@ -187,8 +192,7 @@ class PlisioWebhookView(APIView):
             return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
 
         if status_payment == 'completed':
-            logger.info(f"✅ Платеж успешно завершён: Order {order_number}, Amount {amount} {currency}")
-            # Логика пополнения баланса или обновления заказа
+            logger.info(f"✅ Платеж успешно завершён: Order {order_number}")
         elif status_payment == 'expired':
             logger.warning(f"⚠️ Платёж истёк: Order {order_number}")
         else:
