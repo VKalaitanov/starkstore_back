@@ -175,9 +175,17 @@ class PlisioWebhookView(APIView):
             user = top_up.user
             user.balance += top_up.amount
             user.save()
+            logger.info(f"✅ Баланс пользователя {user.username} пополнен на {top_up.amount}")
+
+        elif status_value in ['new', 'pending']:
+            top_up.status = status_value
+            top_up.save()
+            logger.info(f"⌛ Платёж {invoice_id} в статусе {status_value}")
+
         elif status_value == 'failed':
             top_up.status = 'failed'
             top_up.save()
+            logger.info(f"❌ Платёж {invoice_id} не удался")
 
         return Response({'detail': 'success'})
 
