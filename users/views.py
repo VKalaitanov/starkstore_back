@@ -104,10 +104,10 @@ class CreateTopUpView(APIView):
 
         # Формируем параметры запроса
         params = {
-            'source_currency': 'USD',  # Основная валюта
+            'source_currency': 'BTC',  # Основная валюта
             'source_amount': round(float(amount), 2),
             'order_number': order_number,
-            'currency': 'BTC',  # Валюта оплаты
+            'currency': 'USD',  # Валюта оплаты
             'email': user.email,
             'order_name': 'Top Up Balance',
             'callback_url': 'https://project-pit.ru/api/v1/user/plisio-webhook/',
