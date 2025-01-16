@@ -160,6 +160,7 @@ class PlisioWebhookView(APIView):
         logger.info(f"Webhook headers: {request.headers}")
 
         data = request.data
+        logger.info(f"✅ Ожидаемая подпись: {data}")
         signature = request.headers.get('Signature')  # Получаем заголовок Signature
 
         # 1. Проверка Signature
