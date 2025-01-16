@@ -152,12 +152,18 @@ class CreateTopUpView(APIView):
 
 
 class PlisioWebhookView(APIView):
+    def generate_signature(self, txn_id, amount, currency):
+        """
+        Генерация подписи для проверки данных от Plisio.
+        """
+        verification_string = f"{txn_id}{amount}{currency}{settings.PLISIO_API_KEY}"
+        return hashlib.sha1(verification_string.encode()).hexdigest()
+
     def post(self, request, *args, **kwargs):
         logger.info("=== Получен вебхук от Plisio ===")
         logger.info(f"Webhook data: {request.POST}")
         logger.info(f"Webhook headers: {request.headers}")
 
-        # Извлекаем данные из запроса
         data = request.POST
         verify_hash = data.get('verify_hash')
         txn_id = data.get('txn_id')
@@ -170,27 +176,23 @@ class PlisioWebhookView(APIView):
             logger.error("🚨 Отсутствует verify_hash в данных")
             return Response({'detail': 'Missing verify_hash'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Генерация хэша для проверки подписи
-        verification_string = f"{txn_id}{amount}{currency}{settings.PLISIO_API_KEY}"
-        generated_hash = hashlib.sha1(verification_string.encode()).hexdigest()
+        # Генерация подписи с помощью отдельного метода
+        generated_hash = self.generate_signature(txn_id, amount, currency)
 
         logger.info(f"✅ Ожидаемая подпись: {generated_hash}")
         logger.info(f"📨 Подпись из данных: {verify_hash}")
 
-        # Проверка подписи
         if generated_hash != verify_hash:
             logger.error("🚨 Неверная подпись")
             return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
 
-        # Проверка статуса платежа
         if status_payment == 'completed':
             logger.info(f"✅ Платеж успешно завершён: Order {order_number}, Amount {amount} {currency}")
-            # Тут можно обновить баланс пользователя или изменить статус заказа
+            # Логика пополнения баланса или обновления заказа
         elif status_payment == 'expired':
             logger.warning(f"⚠️ Платёж истёк: Order {order_number}")
         else:
             logger.warning(f"⚠️ Неизвестный статус платежа: {status_payment}")
 
         return Response({'detail': 'Webhook received successfully'}, status=status.HTTP_200_OK)
-
 
