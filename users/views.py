@@ -151,52 +151,13 @@ class CreateTopUpView(APIView):
 
 
 class PlisioWebhookView(APIView):
-    """Обработка уведомлений от Plisio"""
-
-    def generate_signature(self, data):
-        """
-        Генерация подписи для проверки вебхуков.
-        """
-        txn_id = data.get('txn_id', '')
-        source_amount = data.get('source_amount', '')
-        source_currency = data.get('source_currency', '')
-        secret_key = settings.PLISIO_API_KEY
-
-        # Формируем строку для подписи
-        verification_string = f"{txn_id}{source_amount}{source_currency}{secret_key}"
-        logger.info(f"🔑 Строка для подписи: {verification_string}")
-
-        # Генерация HMAC с использованием SHA1 (так как Plisio использует SHA1 для verify_hash)
-        signature = hashlib.sha1(verification_string.encode()).hexdigest()
-        logger.info(f"🔒 Сгенерированная подпись: {signature}")
-
-        return signature
+    """Обработка уведомлений от Plisio без проверки подписи"""
 
     def post(self, request):
         data = request.data
         logger.info(f"Webhook data: {data}")
 
-        # Получаем verify_hash из данных
-        signature = data.get('verify_hash')
-        logger.info(f"Signature (verify_hash) from data: {signature}")
-
-        # Проверяем наличие verify_hash
-        if not signature:
-            return Response({'detail': 'Missing verify_hash'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Генерация ожидаемой подписи
-        try:
-            expected_signature = self.generate_signature(data)
-        except Exception as e:
-            return Response({'detail': f'Error generating signature: {str(e)}'},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        # Сравнение подписей
-        if not hmac.compare_digest(signature, expected_signature):
-            return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
-
-        # Обработка данных вебхука
-        invoice_id = data.get('txn_id')  # заменил с 'id' на 'txn_id'
+        invoice_id = data.get('txn_id')
         status_value = data.get('status')
 
         if not invoice_id:
@@ -211,7 +172,6 @@ class PlisioWebhookView(APIView):
             top_up.status = 'paid'
             top_up.save()
 
-            # Пополнение баланса пользователя
             user = top_up.user
             user.balance += top_up.amount
             user.save()
