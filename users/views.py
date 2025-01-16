@@ -152,11 +152,11 @@ class CreateTopUpView(APIView):
 
 
 class PlisioWebhookView(APIView):
-    def generate_signature(self, txn_id, amount, currency):
+    def generate_signature(self, txn_id, source_amount, source_currency):
         """
         Генерация подписи для проверки данных от Plisio.
         """
-        verification_string = f"{txn_id}{amount}{currency}{settings.PLISIO_API_KEY}"
+        verification_string = f"{txn_id}{source_amount.strip()}{source_currency.strip()}{settings.PLISIO_API_KEY}"
         return hashlib.sha1(verification_string.encode()).hexdigest()
 
     def post(self, request, *args, **kwargs):
@@ -195,4 +195,3 @@ class PlisioWebhookView(APIView):
             logger.warning(f"⚠️ Неизвестный статус платежа: {status_payment}")
 
         return Response({'detail': 'Webhook received successfully'}, status=status.HTTP_200_OK)
-
