@@ -154,6 +154,9 @@ class PlisioWebhookView(APIView):
     """Обработка уведомлений от Plisio"""
 
     def generate_signature(self, data):
+        """
+        Генерация подписи для проверки вебхуков.
+        """
         txn_id = data.get('txn_id', '')
         source_amount = data.get('source_amount', '')
         source_currency = data.get('source_currency', '')
@@ -163,8 +166,8 @@ class PlisioWebhookView(APIView):
         verification_string = f"{txn_id}{source_amount}{source_currency}{secret_key}"
         logger.info(f"🔑 Строка для подписи: {verification_string}")
 
-        # Генерация HMAC с использованием SHA256
-        signature = hmac.new(secret_key.encode(), verification_string.encode(), hashlib.sha256).hexdigest()
+        # Генерация HMAC с использованием SHA1 (так как Plisio использует SHA1 для verify_hash)
+        signature = hashlib.sha1(verification_string.encode()).hexdigest()
         logger.info(f"🔒 Сгенерированная подпись: {signature}")
 
         return signature
@@ -173,26 +176,27 @@ class PlisioWebhookView(APIView):
         data = request.data
         logger.info(f"Webhook data: {data}")
 
-        signature = request.headers.get('Signature')  # Получаем заголовок Signature
-        logger.info(f"Signature from header: {signature}")
+        # Получаем verify_hash из данных
+        signature = data.get('verify_hash')
+        logger.info(f"Signature (verify_hash) from data: {signature}")
 
-        # Проверяем, что заголовок Signature присутствует
+        # Проверяем наличие verify_hash
         if not signature:
-            return Response({'detail': 'Missing signature header'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Missing verify_hash'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Генерируем ожидаемую подпись
+        # Генерация ожидаемой подписи
         try:
             expected_signature = self.generate_signature(data)
         except Exception as e:
             return Response({'detail': f'Error generating signature: {str(e)}'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Сравниваем подписи
+        # Сравнение подписей
         if not hmac.compare_digest(signature, expected_signature):
             return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
 
         # Обработка данных вебхука
-        invoice_id = data.get('id')
+        invoice_id = data.get('txn_id')  # заменил с 'id' на 'txn_id'
         status_value = data.get('status')
 
         if not invoice_id:
@@ -207,11 +211,10 @@ class PlisioWebhookView(APIView):
             top_up.status = 'paid'
             top_up.save()
 
-            # Пополняем баланс пользователя
+            # Пополнение баланса пользователя
             user = top_up.user
             user.balance += top_up.amount
             user.save()
-
         elif status_value == 'failed':
             top_up.status = 'failed'
             top_up.save()
