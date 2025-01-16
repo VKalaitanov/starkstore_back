@@ -5,7 +5,7 @@ api_key = 'RZTKyvsBkD_5dIkelHp3xMyRWwNSqXnm_MfxqR20NCY6LK6hoi7T8gVPTBJwgRko'
 
 # Данные, которые отправляются в запросе
 data = {
-    "id": "6787ee080761c0579e0f17d1",
+    "id": "6787f7a8086534820002acd8",
     "status": "completed"
 }
 
