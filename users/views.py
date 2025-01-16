@@ -173,9 +173,11 @@ class PlisioWebhookView(APIView):
         return signature
 
     def post(self, request):
+        logger.info(f"Webhook headers: {request.headers}")
+        logger.info(f"Webhook request: {request}")
+
         data = request.data
         signature = request.headers.get('Signature')
-        print(signature)
 
         # Проверяем, что заголовок Signature присутствует
         if not signature:
