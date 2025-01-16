@@ -17,6 +17,10 @@ from rest_framework.views import APIView
 from .models import CustomerUser, GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
 from .serializers import GlobalMessageSerializer, BalanceHistorySerializer
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class ActivateUser(APIView):
     def get(self, request, uid, token):
@@ -83,11 +87,6 @@ class BalanceHistoryView(generics.ListAPIView):
 
     def get_queryset(self):
         return BalanceHistory.objects.filter(user=self.request.user).order_by('-create_time')
-
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class CreateTopUpView(APIView):
@@ -175,7 +174,8 @@ class PlisioWebhookView(APIView):
 
     def post(self, request):
         data = request.data
-        signature = request.headers.get('Signature')  # Получаем заголовок Signature
+        signature = request.headers.get('Signature')
+        print(signature)
 
         # Проверяем, что заголовок Signature присутствует
         if not signature:
@@ -218,6 +218,3 @@ class PlisioWebhookView(APIView):
             top_up.save()
 
         return Response({'detail': 'success'})
-
-
-
