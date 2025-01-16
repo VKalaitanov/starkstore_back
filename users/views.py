@@ -154,9 +154,6 @@ class PlisioWebhookView(APIView):
     """Обработка уведомлений от Plisio"""
 
     def generate_signature(self, data):
-        """
-        Генерация подписи для проверки вебхуков.
-        """
         txn_id = data.get('txn_id', '')
         source_amount = data.get('source_amount', '')
         source_currency = data.get('source_currency', '')
@@ -173,11 +170,11 @@ class PlisioWebhookView(APIView):
         return signature
 
     def post(self, request):
-        logger.info(f"Webhook headers: {request.headers}")
-        logger.info(f"Webhook request: {request}")
-
         data = request.data
-        signature = request.headers.get('Signature')
+        logger.info(f"Webhook data: {data}")
+
+        signature = request.headers.get('Signature')  # Получаем заголовок Signature
+        logger.info(f"Signature from header: {signature}")
 
         # Проверяем, что заголовок Signature присутствует
         if not signature:
@@ -220,3 +217,4 @@ class PlisioWebhookView(APIView):
             top_up.save()
 
         return Response({'detail': 'success'})
+
