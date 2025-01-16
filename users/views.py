@@ -155,7 +155,9 @@ class PlisioWebhookView(APIView):
 
     def post(self, request):
         data = request.data
+
         logger.info(f"Webhook data: {data}")
+        logger.info(f"Webhook header: {request.headers}")
 
         invoice_id = data.get('txn_id')
         status_value = data.get('status')
