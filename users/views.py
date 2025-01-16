@@ -5,6 +5,7 @@ import uuid
 
 import requests
 from django.conf import settings
+from django.contrib.admin.utils import unquote
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlsafe_base64_decode
@@ -151,6 +152,16 @@ class CreateTopUpView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
+import hashlib
+import hmac
+import logging
+from django.conf import settings
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+logger = logging.getLogger(__name__)
+
 class PlisioWebhookView(APIView):
     def generate_signature(self, data):
         txn_id = data.get('txn_id', '')
@@ -168,6 +179,36 @@ class PlisioWebhookView(APIView):
 
         return signature
 
+    def verify_callback_data(self, post_data, secret_key):
+        # Проверяем, что verify_hash присутствует в данных
+        if 'verify_hash' not in post_data:
+            return False
+
+        verify_hash = post_data['verify_hash']  # Извлекаем verify_hash
+        del post_data['verify_hash']  # Убираем его из данных
+
+        # Сортируем данные по ключам
+        sorted_post_data = {k: post_data[k] for k in sorted(post_data.keys())}
+
+        # Преобразуем некоторые поля в строки
+        if 'expire_utc' in sorted_post_data:
+            sorted_post_data['expire_utc'] = str(sorted_post_data['expire_utc'])
+
+        if 'tx_urls' in sorted_post_data:
+            sorted_post_data['tx_urls'] = unquote(sorted_post_data['tx_urls'])
+
+        # Сериализация данных в строку
+        post_string = str(sorted_post_data)
+
+        # Генерация подписи с помощью HMAC-SHA1
+        check_key = hmac.new(secret_key.encode(), post_string.encode(), hashlib.sha1).hexdigest()
+
+        # Сравниваем с полученной подписью
+        if check_key != verify_hash:
+            return False
+
+        return True
+
     def post(self, request, *args, **kwargs):
         logger.info("=== Получен вебхук от Plisio ===")
         logger.info(f"Webhook data: {request.POST}")
@@ -178,16 +219,15 @@ class PlisioWebhookView(APIView):
         status_payment = data.get('status')
         order_number = data.get('order_number')
 
+        # Получаем секретный ключ из настроек
+        secret_key = settings.PLISIO_API_KEY
+
         if not verify_hash:
             logger.error("🚨 Отсутствует verify_hash в данных")
             return Response({'detail': 'Missing verify_hash'}, status=status.HTTP_400_BAD_REQUEST)
 
-        generated_hash = self.generate_signature(data)
-
-        logger.info(f"✅ Ожидаемая подпись: {generated_hash}")
-        logger.info(f"📨 Подпись из данных: {verify_hash}")
-
-        if generated_hash != verify_hash:
+        # Используем функцию верификации
+        if not self.verify_callback_data(data, secret_key):
             logger.error("🚨 Неверная подпись")
             return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -199,3 +239,4 @@ class PlisioWebhookView(APIView):
             logger.warning(f"⚠️ Неизвестный статус платежа: {status_payment}")
 
         return Response({'detail': 'Webhook received successfully'}, status=status.HTTP_200_OK)
+

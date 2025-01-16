@@ -1,13 +1,12 @@
 import hashlib
 
-txn_id = '67893e1e0ae97e06de014686'
+txn_id = '67894caa099a68b62b003625'
 source_amount = '50.00'
 source_currency = 'USD'
-secret_key = 'RZTKyvsBkD_5dIkelHp3xMyRWwNSqXnm_MfxqR20NCY6LK6hoi7T8gVPTBJwgRko'  # Заменить на свой ключ
+status = 'complited'  # Статус платежа
+secret_key = 'RZTKyvsBkD_5dIkelHp3xMyRWwNSqXnm_MfxqR20NCY6LK6hoi7T8gVPTBJwgRko'
 
-# Формирование строки
-verification_string = f"{txn_id}{source_amount}{source_currency}{secret_key}"
-
-# Генерация хэша
+# Попробуем включить статус в подпись
+verification_string = f"{txn_id}{source_amount}{source_currency}{status}{secret_key}"
 generated_hash = hashlib.sha1(verification_string.encode()).hexdigest()
 print(f"Generated Hash: {generated_hash}")
