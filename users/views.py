@@ -152,84 +152,45 @@ class CreateTopUpView(APIView):
 
 
 class PlisioWebhookView(APIView):
-    """Обработка уведомлений от Plisio"""
-
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         logger.info("=== Получен вебхук от Plisio ===")
-        logger.info(f"Webhook data: {request.data}")
+        logger.info(f"Webhook data: {request.POST}")
         logger.info(f"Webhook headers: {request.headers}")
 
-        data = request.data
-        logger.info(f"✅ Ожидаемая подпись: {data}")
-        signature = request.headers.get('Signature')  # Получаем заголовок Signature
+        # Извлекаем данные из запроса
+        data = request.POST
+        verify_hash = data.get('verify_hash')
+        txn_id = data.get('txn_id')
+        status_payment = data.get('status')
+        amount = data.get('source_amount')
+        currency = data.get('source_currency')
+        order_number = data.get('order_number')
 
-        # 1. Проверка Signature
-        if not signature:
-            logger.warning("🚨 Отсутствует заголовок Signature")
-            return Response({'detail': 'Missing signature header'}, status=status.HTTP_400_BAD_REQUEST)
+        if not verify_hash:
+            logger.error("🚨 Отсутствует verify_hash в данных")
+            return Response({'detail': 'Missing verify_hash'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2. Генерация ожидаемой подписи
-        try:
-            expected_signature = hmac.new(
-                settings.PLISIO_API_KEY.encode(),
-                msg=json.dumps(data, sort_keys=True).encode(),
-                digestmod=hashlib.sha256,
-            ).hexdigest()
-            logger.info(f"✅ Ожидаемая подпись: {expected_signature}")
-            logger.info(f"📨 Подпись из заголовка: {signature}")
-        except Exception as e:
-            logger.error(f"❌ Ошибка генерации подписи: {str(e)}")
-            return Response({'detail': f'Error generating signature: {str(e)}'},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Генерация хэша для проверки подписи
+        verification_string = f"{txn_id}{amount}{currency}{settings.PLISIO_API_KEY}"
+        generated_hash = hashlib.sha1(verification_string.encode()).hexdigest()
 
-        # 3. Сравнение подписей
-        if not hmac.compare_digest(signature, expected_signature):
-            logger.warning("🚨 Неверная подпись")
+        logger.info(f"✅ Ожидаемая подпись: {generated_hash}")
+        logger.info(f"📨 Подпись из данных: {verify_hash}")
+
+        # Проверка подписи
+        if generated_hash != verify_hash:
+            logger.error("🚨 Неверная подпись")
             return Response({'detail': 'Invalid signature'}, status=status.HTTP_403_FORBIDDEN)
-        logger.info("✅ Подпись подтверждена")
 
-        # 4. Проверка invoice_id
-        invoice_id = data.get('id')
-        status_value = data.get('status')
-
-        if not invoice_id:
-            logger.warning("🚨 Отсутствует invoice_id в данных")
-            return Response({'detail': 'Invoice ID is missing'}, status=status.HTTP_400_BAD_REQUEST)
-
-        logger.info(f"📄 Найден invoice_id: {invoice_id}")
-        logger.info(f"📦 Статус платежа: {status_value}")
-
-        # 5. Поиск счёта в базе данных
-        try:
-            top_up = BalanceTopUp.objects.get(invoice_id=invoice_id)
-            logger.info(f"✅ Найден топ-ап: {top_up}")
-        except BalanceTopUp.DoesNotExist:
-            logger.error(f"❌ Счет с ID {invoice_id} не найден в базе")
-            return Response({'detail': 'Счет не найден'}, status=status.HTTP_404_NOT_FOUND)
-
-        # 6. Обработка статуса платежа
-        if status_value == 'completed':
-            if top_up.status != 'paid':  # Проверка на повторную обработку
-                top_up.status = 'paid'
-                top_up.save()
-                logger.info(f"✅ Статус счёта обновлен на 'paid' для invoice_id: {invoice_id}")
-
-                # 7. Пополнение баланса пользователя
-                user = top_up.user
-                logger.info(f"👤 Пользователь: {user.email} | Баланс до пополнения: {user.balance}")
-                user.balance += top_up.amount
-                user.save()
-                logger.info(f"💰 Баланс пользователя {user.email} пополнен на {top_up.amount}. Новый баланс: {user.balance}")
-            else:
-                logger.warning(f"⚠️ Счет {invoice_id} уже оплачен. Повторное уведомление проигнорировано.")
-        elif status_value == 'failed':
-            top_up.status = 'failed'
-            top_up.save()
-            logger.info(f"❌ Статус счёта обновлен на 'failed' для invoice_id: {invoice_id}")
+        # Проверка статуса платежа
+        if status_payment == 'completed':
+            logger.info(f"✅ Платеж успешно завершён: Order {order_number}, Amount {amount} {currency}")
+            # Тут можно обновить баланс пользователя или изменить статус заказа
+        elif status_payment == 'expired':
+            logger.warning(f"⚠️ Платёж истёк: Order {order_number}")
         else:
-            logger.warning(f"⚠️ Неизвестный статус платежа: {status_value}")
+            logger.warning(f"⚠️ Неизвестный статус платежа: {status_payment}")
 
-        logger.info("=== Обработка вебхука завершена ===")
-        return Response({'detail': 'success'})
+        return Response({'detail': 'Webhook received successfully'}, status=status.HTTP_200_OK)
 
 
