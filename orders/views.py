@@ -50,7 +50,7 @@ class OrderCreateView(CreateAPIView):
             logger.info(f"Заказ успешно создан: ID={order.id}")
         except Exception as e:
             logger.error(f"Ошибка при создании заказа: {str(e)}")
-            raise serializers.ValidationError({"detail": "Не удалось создать заказ. Проверьте данные."})
+            raise serializers.ValidationError({"detail": "Failed to create order. Check the data."})
 
 
 class ReplenishmentBalanceCreateView(CreateAPIView):
@@ -68,10 +68,10 @@ class OrderDetailView(APIView):
             order = Order.objects.get(pk=id_order, user=request.user)
         except Order.DoesNotExist:
             logger.error(f"Заказ с ID={id_order} не найден или недоступен пользователю {request.user}.")
-            return Response({"detail": f"Заказ с ID={id_order} не найден."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": f"Order with ID={id_order} not found."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error(f"Ошибка при получении заказа: {str(e)}")
-            return Response({"detail": "Произошла ошибка при обработке запроса."},
+            return Response({"detail": "An error occurred while processing the request."},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Сериализуем и возвращаем данные заказа

@@ -31,11 +31,11 @@ class ActivateUser(APIView):
                 # Активируем пользователя
                 user.is_active = True
                 user.save()
-                return Response({'detail': 'Аккаунт успешно активирован.'}, status=status.HTTP_200_OK)
+                return Response({'detail': 'The account has been successfully activated.'}, status=status.HTTP_200_OK)
             else:
-                return Response({'detail': 'Неверный токен.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
         except (ObjectDoesNotExist, ValueError, TypeError):
-            return Response({'detail': 'Пользователь не найден.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class GlobalMessageView(APIView):
@@ -99,7 +99,7 @@ class CreateTopUpView(APIView):
         # Проверка email пользователя
         if not user.email:
             logger.error("❌ У пользователя отсутствует email.")
-            return Response({'detail': 'У пользователя отсутствует email.'},
+            return Response({'detail': 'The user does not have email.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         amount = request.data.get('amount')
@@ -107,7 +107,7 @@ class CreateTopUpView(APIView):
             amount = round(float(amount), 2) if amount else None
         except ValueError:
             logger.error("❌ Некорректная сумма пополнения.")
-            return Response({'detail': 'Некорректная сумма пополнения.'},
+            return Response({'detail': 'Incorrect replenishment amount.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         order_number = int(uuid.uuid4())
@@ -116,7 +116,7 @@ class CreateTopUpView(APIView):
 
         if not amount or amount <= 0:
             logger.error("❌ Сумма должна быть больше 0.")
-            return Response({'detail': 'Сумма должна быть больше 0'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'The amount should be more 0'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             invoice = plisio_client.create_invoice(
@@ -131,7 +131,7 @@ class CreateTopUpView(APIView):
             logger.info(f"✅ Счёт успешно создан в Plisio: {invoice}")
         except Exception as e:
             logger.error(f"❌ Ошибка при создании счета в Plisio: {str(e)}")
-            return Response({'detail': 'Ошибка при создании счета в Plisio'},
+            return Response({'detail': 'Error when creating an invoice in Plisio'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         invoice_id = invoice.txn_id
@@ -140,7 +140,7 @@ class CreateTopUpView(APIView):
 
         if not invoice_id:
             logger.error("❌ Не удалось получить ID счета от Plisio.")
-            return Response({'detail': 'Ошибка при получении данных счета'},
+            return Response({'detail': 'Error while retrieving account data'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         top_up = BalanceTopUp.objects.create(
