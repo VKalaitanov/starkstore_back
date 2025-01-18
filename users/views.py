@@ -197,7 +197,7 @@ class PlisioWebhookView(APIView):
             user.save()
             logger.info(f"✅ Баланс пользователя {user.username} пополнен на {top_up.amount}")
             logger.info("💸 Платёж успешно выполнен.")
-        elif status_payment == 'cancelled':
+        elif status_payment == 'error':
             top_up.status = 'failed'
             top_up.save()
             logger.warning("❌ Платёж был отменён.")
