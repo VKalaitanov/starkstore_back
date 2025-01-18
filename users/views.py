@@ -123,7 +123,7 @@ class CreateTopUpView(APIView):
                 currency=CryptoCurrency.BTC,
                 order_number=order_number,
                 order_name='Top Up Balance',
-                callback_url='https://project-pit.ru/api/v1/user/plisio-webhook/',
+                callback_url='https://project-pit.ru/api/v1/user/plisio-webhook/?json=true',
                 email=user.email,
                 source_currency=FiatCurrency.USD
             )
@@ -158,51 +158,33 @@ class CreateTopUpView(APIView):
 
 
 class PlisioWebhookView(APIView):
-    def post(self, request):
-        data = request.data
-        logger.info(f"📨 Получен webhook от Plisio: {data}")
+    def post(self, request, *args, **kwargs):
+        # Инициализация клиента Plisio с секретным ключом
+        client = PlisioClient(api_key=settings.PLISIO_SECRET_KEY)
 
-        invoice_id = data.get('txn_id')
-        status_value = data.get('status')
-        sign = request.headers.get('Plisio-Signature')
-
-        if not invoice_id:
-            logger.error("❌ Отсутствует invoice ID в webhook.")
-            return Response({'detail': 'Отсутствует invoice ID'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not sign:
-            logger.error("❌ Отсутствует подпись в webhook.")
-            return Response({'detail': 'Отсутствует подпись'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not plisio_client.validate_callback(data, sign):
-            logger.warning("🚫 Неверная подпись уведомления!")
+        # Проверка валидности подписи в webhook
+        if not client.validate_callback(request.body):
+            logger.error("❌ Неверная подпись в webhook.")
             return Response({'detail': 'Неверная подпись'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            top_up = BalanceTopUp.objects.get(invoice_id=invoice_id)
-        except BalanceTopUp.DoesNotExist:
-            logger.error(f"❌ Счет с ID {invoice_id} не найден.")
-            return Response({'detail': 'Счет не найден'}, status=status.HTTP_404_NOT_FOUND)
+        logger.info("✅ Подпись webhook подтверждена.")
 
-        logger.info(f"🔄 Обновление статуса платежа {invoice_id} на {status_value}")
+        data = request.data
+        status_payment = data.get('status')
+        txn_id = data.get('txn_id')
+        amount = data.get('amount')
+        currency = data.get('currency')
 
-        if status_value == 'completed':
-            top_up.status = 'paid'
-            top_up.save()
-            user = top_up.user
-            user.balance += top_up.amount
-            user.save()
-            logger.info(f"✅ Баланс пользователя {user.username} пополнен на {top_up.amount}")
+        logger.info(f"📨 Webhook данные: Статус - {status_payment}, TXN ID - {txn_id}, Сумма - {amount} {currency}")
 
-        elif status_value in ['new', 'pending']:
-            top_up.status = status_value
-            top_up.save()
-            logger.info(f"⌛ Платёж {invoice_id} в статусе {status_value}")
+        # Обработка статуса платежа
+        if status_payment == 'paid':
+            logger.info("💸 Платёж успешно выполнен.")
+            # Логика пополнения баланса
+        elif status_payment == 'cancelled':
+            logger.warning("❌ Платёж был отменён.")
+        else:
+            logger.info("⏳ Платёж в процессе.")
 
-        elif status_value == 'failed':
-            top_up.status = 'failed'
-            top_up.save()
-            logger.info(f"❌ Платёж {invoice_id} не удался")
-
-        return Response({'detail': 'success'})
+        return Response({'detail': 'Webhook успешно обработан'}, status=status.HTTP_200_OK)
 
