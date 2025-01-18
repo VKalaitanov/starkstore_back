@@ -114,9 +114,9 @@ class CreateTopUpView(APIView):
         logger.info(f"👤 Пользователь: {user.username}, Email: {user.email}")
         logger.info(f"📝 Создание счета в Plisio на сумму {amount} USD")
 
-        if not amount or amount <= 0:
-            logger.error("❌ Сумма должна быть больше 0.")
-            return Response({'detail': 'The amount should be more 0'}, status=status.HTTP_400_BAD_REQUEST)
+        if not amount or amount < 10:
+            logger.error("❌ Сумма должна быть не менее 10")
+            return Response({'detail': 'The amount must be at least 10'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             invoice = plisio_client.create_invoice(
