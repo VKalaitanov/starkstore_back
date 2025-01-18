@@ -160,7 +160,7 @@ class CreateTopUpView(APIView):
 class PlisioWebhookView(APIView):
     def post(self, request, *args, **kwargs):
         # Инициализация клиента Plisio с секретным ключом
-        client = PlisioClient(api_key=settings.PLISIO_SECRET_KEY)
+        client = PlisioClient(api_key=settings.PLISIO_API_KEY)
 
         # Проверка валидности подписи в webhook
         if not client.validate_callback(request.body):
