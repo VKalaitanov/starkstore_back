@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 
@@ -159,11 +160,17 @@ class CreateTopUpView(APIView):
 
 class PlisioWebhookView(APIView):
     def post(self, request, *args, **kwargs):
-        # Инициализация клиента Plisio с секретным ключом
         client = PlisioClient(api_key=settings.PLISIO_API_KEY)
 
-        # Проверка валидности подписи в webhook
-        if not client.validate_callback(request.body):
+        if not request.body:
+            logger.error("❌ Пустое тело запроса в webhook.")
+            return Response({'detail': 'Пустое тело запроса'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if request.content_type != 'application/json':
+            logger.error(f"❌ Неверный Content-Type: {request.content_type}")
+            return Response({'detail': 'Неверный формат данных'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not client.validate_callback(json.dumps(request.data)):
             logger.error("❌ Неверная подпись в webhook.")
             return Response({'detail': 'Неверная подпись'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -176,14 +183,27 @@ class PlisioWebhookView(APIView):
         currency = data.get('currency')
 
         logger.info(f"📨 Webhook данные: Статус - {status_payment}, TXN ID - {txn_id}, Сумма - {amount} {currency}")
+        try:
+            top_up = BalanceTopUp.objects.get(invoice_id=txn_id)
+        except BalanceTopUp.DoesNotExist:
+            logger.error(f"❌ Счет с ID {txn_id} не найден.")
+            return Response({'detail': 'Счет не найден'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Обработка статуса платежа
         if status_payment == 'paid':
+            top_up.status = 'paid'
+            top_up.save()
+            user = top_up.user
+            user.balance += top_up.amount
+            user.save()
+            logger.info(f"✅ Баланс пользователя {user.username} пополнен на {top_up.amount}")
             logger.info("💸 Платёж успешно выполнен.")
-            # Логика пополнения баланса
         elif status_payment == 'cancelled':
+            top_up.status = 'failed'
+            top_up.save()
             logger.warning("❌ Платёж был отменён.")
         else:
+            top_up.status = 'pending'
+            top_up.save()
             logger.info("⏳ Платёж в процессе.")
 
         return Response({'detail': 'Webhook успешно обработан'}, status=status.HTTP_200_OK)
