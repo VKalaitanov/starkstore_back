@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlsafe_base64_decode
-from plisio import PlisioClient
+from plisio import PlisioClient, CryptoCurrency, FiatCurrency
 from rest_framework import generics, permissions
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -109,7 +109,7 @@ class CreateTopUpView(APIView):
             return Response({'detail': 'Некорректная сумма пополнения.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        order_number = str(uuid.uuid4())
+        order_number = int(uuid.uuid4())
         logger.info(f"👤 Пользователь: {user.username}, Email: {user.email}")
         logger.info(f"📝 Создание счета в Plisio на сумму {amount} USD")
 
@@ -120,12 +120,12 @@ class CreateTopUpView(APIView):
         try:
             invoice = plisio_client.create_invoice(
                 amount=amount,
-                currency='BTC',
+                currency=CryptoCurrency.BTC,
                 order_number=order_number,
                 order_name='Top Up Balance',
                 callback_url='https://project-pit.ru/api/v1/user/plisio-webhook/',
                 email=user.email,
-                source_currency='USD'
+                source_currency=FiatCurrency.USD
             )
             logger.info(f"✅ Счёт успешно создан в Plisio: {invoice}")
         except Exception as e:
