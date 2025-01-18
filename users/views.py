@@ -189,7 +189,7 @@ class PlisioWebhookView(APIView):
             logger.error(f"❌ Счет с ID {txn_id} не найден.")
             return Response({'detail': 'Счет не найден'}, status=status.HTTP_404_NOT_FOUND)
 
-        if status_payment == 'paid':
+        if status_payment == 'completed':
             top_up.status = 'paid'
             top_up.save()
             user = top_up.user
