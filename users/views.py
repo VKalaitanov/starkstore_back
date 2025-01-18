@@ -1,13 +1,11 @@
-import hashlib
-import hmac
-import json
+import logging
 import uuid
 
-import requests
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlsafe_base64_decode
+from plisio import PlisioClient
 from rest_framework import generics, permissions
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -16,8 +14,6 @@ from rest_framework.views import APIView
 
 from .models import CustomerUser, GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
 from .serializers import GlobalMessageSerializer, BalanceHistorySerializer
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -89,53 +85,41 @@ class BalanceHistoryView(generics.ListAPIView):
         return BalanceHistory.objects.filter(user=self.request.user).order_by('-create_time')
 
 
+plisio_client = PlisioClient(api_key=settings.PLISIO_API_KEY)
+
+
 class CreateTopUpView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        logger.error(f"Request data: {request.data}")
+        logger.info(f"Request data: {request.data}")
         user = request.user
         amount = request.data.get('amount')
         amount = round(float(amount), 2) if amount else None
-        order_number = str(uuid.uuid4())  # Генерируем уникальный номер заказа
+        order_number = str(uuid.uuid4())
 
         if not amount or float(amount) <= 0:
             return Response({'detail': 'Сумма должна быть больше 0'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Формируем параметры запроса
-        params = {
-            'source_currency': 'USD',  # Основная валюта
-            'source_amount': round(float(amount), 2),
-            'order_number': order_number,
-            'currency': 'BTC',  # Валюта оплаты
-            'email': user.email,
-            'order_name': 'Top Up Balance',
-            'callback_url': 'https://project-pit.ru/api/v1/user/plisio-webhook/?json=true',
-            'api_key': settings.PLISIO_API_KEY,
-        }
-
         try:
-            # Отправляем GET-запрос на Plisio API
-            response = requests.get(
-                'https://api.plisio.net/api/v1/invoices/new',
-                params=params
+            invoice = plisio_client.create_invoice(
+                amount=amount,
+                currency='BTC',
+                order_number=order_number,
+                order_name='Top Up Balance',
+                callback_url='https://project-pit.ru/api/v1/user/plisio-webhook/',
+                email=user.email,
+                source_currency='USD'
             )
-            response.raise_for_status()  # Бросает исключение, если статус не 2xx
-        except requests.RequestException as e:
-            logger.error(f"Plisio request failed: {str(e)}")
+        except Exception as e:
+            logger.error(f"Plisio invoice creation failed: {str(e)}")
             return Response({'detail': 'Ошибка при создании счета в Plisio'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        response_data = response.json()
-        if response_data.get('status') != 'success':
-            logger.error(f"Plisio response: {response_data}")
-            return Response({'detail': response_data.get('message', 'Ошибка при создании счета')},
-                            status=status.HTTP_400_BAD_REQUEST)
+        invoice_id = invoice.get('txn_id')
+        invoice_url = invoice.get('invoice_url')
+        invoice_total_sum = invoice.get('invoice_total_sum')
 
-        invoice_data = response_data['data']
-        invoice_id = invoice_data.get('txn_id')  # Идентификатор транзакции от Plisio
-
-        # Создаем запись в базе данных
         top_up = BalanceTopUp.objects.create(
             user=user,
             amount=amount,
@@ -145,25 +129,26 @@ class CreateTopUpView(APIView):
 
         return Response({
             'id': top_up.id,
-            'invoice_url': invoice_data.get('invoice_url'),
-            'invoice_total_sum': invoice_data.get('invoice_total_sum'),
+            'invoice_url': invoice_url,
+            'invoice_total_sum': invoice_total_sum,
         }, status=status.HTTP_201_CREATED)
 
 
 class PlisioWebhookView(APIView):
-    """Обработка уведомлений от Plisio без проверки подписи"""
-
     def post(self, request):
         data = request.data
-
         logger.info(f"Webhook data: {data}")
-        logger.info(f"Webhook header: {request.headers}")
 
         invoice_id = data.get('txn_id')
         status_value = data.get('status')
+        sign = request.headers.get('Plisio-Signature')
 
-        if not invoice_id:
-            return Response({'detail': 'Invoice ID is missing'}, status=status.HTTP_400_BAD_REQUEST)
+        if not invoice_id or not sign:
+            return Response({'detail': 'Отсутствует invoice ID или подпись'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not plisio_client.validate_callback(data, sign):
+            logger.warning("Неверная подпись уведомления!")
+            return Response({'detail': 'Invalid signature'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             top_up = BalanceTopUp.objects.get(invoice_id=invoice_id)
@@ -173,7 +158,6 @@ class PlisioWebhookView(APIView):
         if status_value == 'completed':
             top_up.status = 'paid'
             top_up.save()
-
             user = top_up.user
             user.balance += top_up.amount
             user.save()
@@ -190,4 +174,3 @@ class PlisioWebhookView(APIView):
             logger.info(f"❌ Платёж {invoice_id} не удался")
 
         return Response({'detail': 'success'})
-
