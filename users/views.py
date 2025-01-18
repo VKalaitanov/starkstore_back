@@ -1,13 +1,12 @@
-import hashlib
-import hmac
-import json
+import logging
 import uuid
 
-import requests
+import plisio
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.http import urlsafe_base64_decode
+from django.utils.translation import gettext_lazy as _
 from rest_framework import generics, permissions
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -16,8 +15,6 @@ from rest_framework.views import APIView
 
 from .models import CustomerUser, GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
 from .serializers import GlobalMessageSerializer, BalanceHistorySerializer
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -93,87 +90,75 @@ class CreateTopUpView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        logger.error(f"Request data: {request.data}")
         user = request.user
         amount = request.data.get('amount')
-        amount = round(float(amount), 2) if amount else None
-        order_number = str(uuid.uuid4())  # Генерируем уникальный номер заказа
-
         if not amount or float(amount) <= 0:
-            return Response({'detail': 'Сумма должна быть больше 0'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': _('Сумма должна быть больше 0')}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Формируем параметры запроса
-        params = {
-            'source_currency': 'BTC',  # Основная валюта
-            'source_amount': round(float(amount), 2),
-            'order_number': order_number,
-            'currency': 'USD',  # Валюта оплаты
-            'email': user.email,
-            'order_name': 'Top Up Balance',
-            'callback_url': 'https://project-pit.ru/api/v1/user/plisio-webhook/',
-            'api_key': settings.PLISIO_API_KEY,
-        }
+        amount = round(float(amount), 2)
+        order_number = str(uuid.uuid4())
+
+        # Инициализация клиента Plisio
+        client = plisio.PlisioClient(api_key=settings.PLISIO_API_KEY)
 
         try:
-            # Отправляем GET-запрос на Plisio API
-            response = requests.get(
-                'https://api.plisio.net/api/v1/invoices/new',
-                params=params
+            # Создание счета
+            invoice = client.create_invoice(
+                currency=plisio.CryptoCurrency.BTC,
+                order_name='Top Up Balance',
+                order_number=order_number,
+                source_currency='USD',
+                source_amount=amount,
+                email=user.email,
+                callback_url='https://project-pit.ru/api/v1/user/plisio-webhook/?json=true',
             )
-            response.raise_for_status()  # Бросает исключение, если статус не 2xx
-        except requests.RequestException as e:
-            logger.error(f"Plisio request failed: {str(e)}")
-            return Response({'detail': 'Ошибка при создании счета в Plisio'},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            logger.error(f"Ошибка при создании счета в Plisio: {e}")
+            return Response({'detail': _('Ошибка при создании счета')}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        response_data = response.json()
-        if response_data.get('status') != 'success':
-            logger.error(f"Plisio response: {response_data}")
-            return Response({'detail': response_data.get('message', 'Ошибка при создании счета')},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        invoice_data = response_data['data']
-        invoice_id = invoice_data.get('txn_id')  # Идентификатор транзакции от Plisio
-
-        # Создаем запись в базе данных
+        # Сохраняем данные счета в базе
         top_up = BalanceTopUp.objects.create(
             user=user,
             amount=amount,
-            invoice_id=invoice_id,
+            invoice_id=invoice.txn_id,
             status='pending',
         )
 
         return Response({
             'id': top_up.id,
-            'invoice_url': invoice_data.get('invoice_url'),
-            'invoice_total_sum': invoice_data.get('invoice_total_sum'),
+            'invoice_url': invoice.invoice_url,
+            'invoice_total_sum': invoice.invoice_total_sum,
         }, status=status.HTTP_201_CREATED)
 
 
 class PlisioWebhookView(APIView):
-    """Обработка уведомлений от Plisio без проверки подписи"""
+    """Обработка уведомлений от Plisio с проверкой подписи"""
 
     def post(self, request):
+        client = plisio.PlisioClient(api_key=settings.PLISIO_API_KEY)
         data = request.data
 
-        logger.info(f"Webhook data: {data}")
-        logger.info(f"Webhook header: {request.headers}")
+        # Проверяем подпись
+        if not client.validate_callback(request.body):
+            return Response({'detail': _('Неверная подпись данных')}, status=status.HTTP_400_BAD_REQUEST)
 
         invoice_id = data.get('txn_id')
         status_value = data.get('status')
 
         if not invoice_id:
-            return Response({'detail': 'Invoice ID is missing'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': _('Отсутствует ID счета')}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             top_up = BalanceTopUp.objects.get(invoice_id=invoice_id)
         except BalanceTopUp.DoesNotExist:
-            return Response({'detail': 'Счет не найден'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': _('Счет не найден')}, status=status.HTTP_404_NOT_FOUND)
 
+        # Обновление статуса счета
         if status_value == 'completed':
             top_up.status = 'paid'
             top_up.save()
 
+            # Обновляем баланс пользователя
             user = top_up.user
             user.balance += top_up.amount
             user.save()
@@ -189,5 +174,5 @@ class PlisioWebhookView(APIView):
             top_up.save()
             logger.info(f"❌ Платёж {invoice_id} не удался")
 
-        return Response({'detail': 'success'})
+        return Response({'detail': _('Успешно обработано')})
 
