@@ -121,7 +121,7 @@ class CreateTopUpView(APIView):
         try:
             invoice = plisio_client.create_invoice(
                 amount=amount,
-                currency=CryptoCurrency.BTC,
+                currency=CryptoCurrency.USDT_TRX,
                 order_number=order_number,
                 order_name='Top Up Balance',
                 callback_url='https://project-pit.ru/api/v1/user/plisio-webhook/?json=true',
