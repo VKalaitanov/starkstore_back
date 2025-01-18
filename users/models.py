@@ -170,7 +170,6 @@ class BalanceTopUp(models.Model):
         verbose_name=_("Статус"),
     )
     order_number = models.UUIDField(
-        default=uuid.uuid4,
         unique=True,
         verbose_name=_("Номер заказа"),
         help_text=_("Уникальный номер заказа для Plisio"),
