@@ -133,9 +133,9 @@ class CreateTopUpView(APIView):
             return Response({'detail': 'Ошибка при создании счета в Plisio'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        invoice_id = invoice.get('txn_id')
-        invoice_url = invoice.get('invoice_url')
-        invoice_total_sum = invoice.get('invoice_total_sum')
+        invoice_id = invoice.txn_id
+        invoice_url = invoice.invoice_url
+        invoice_total_sum = invoice.invoice_total_sum
 
         if not invoice_id:
             logger.error("❌ Не удалось получить ID счета от Plisio.")
