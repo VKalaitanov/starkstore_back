@@ -11,7 +11,10 @@ admin.site.register(PointsServiceOption)
 
 class ServiceOptionAdmin(admin.ModelAdmin):
     form = ServiceOptionAdminForm
-    search_fields = ['service__name', 'category', 'price_per_unit', 'period', 'is_interval_required', 'interval']
+    search_fields = [
+        'service__name', 'category', 'price_per_unit',
+        'period', 'is_interval_required', 'interval'
+    ]
     list_filter = ['is_interval_required']
 
     def get_fields(self, request, obj=None):

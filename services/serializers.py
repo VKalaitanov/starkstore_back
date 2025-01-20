@@ -11,6 +11,7 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
     interval = serializers.IntegerField(required=False, allow_null=True)
     video_link = serializers.URLField(read_only=True)
     service_name = serializers.CharField(source='service.name', read_only=True)
+    admin_contact_message = serializers.CharField(read_only=True)
 
     class Meta:
         model = ServiceOption
@@ -25,6 +26,7 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
             'period',
             'required_field',
             'points',
+            'admin_contact_message',
             'interval'
         ]
 
