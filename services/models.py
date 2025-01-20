@@ -50,7 +50,7 @@ class ServiceOption(models.Model):
         related_name='service_option',
         verbose_name="Пункты для опции"
     )
-    admin_contact_message = models.TextField(
+    admin_contact_message = models.CharField(
         blank=True,
         null=True,
         verbose_name="Сообщение для связи с администратором",
