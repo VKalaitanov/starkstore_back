@@ -42,17 +42,20 @@ class GlobalMessageView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        # Получаем активное сообщение, проверяя, не закрыто ли оно пользователем
-        message = GlobalMessage.objects.filter(is_active=True).first()
+        # Получаем активные сообщения, которые пользователь ещё не закрыл
+        messages = GlobalMessage.objects.filter(is_active=True).exclude(
+            id__in=UserGlobalMessageStatus.objects.filter(
+                user=request.user,
+                is_closed=True
+            ).values_list(
+                'message_id',
+                flat=True
+            )
+        ).order_by('-created_at')  # Сортируем по дате создания, чтобы показывать самое старое сообщение
 
-        if message:
-            # Проверяем, закрыто ли это сообщение пользователем
-            user_message_status = UserGlobalMessageStatus.objects.filter(user=request.user, message=message).first()
-            if user_message_status and user_message_status.is_closed:
-                return Response({"detail": "Message closed by user"})
-
-            # Если сообщение активно, возвращаем его
-            return Response(GlobalMessageSerializer(message).data)
+        if messages.exists():
+            # Возвращаем первое активное сообщение
+            return Response(GlobalMessageSerializer(messages.first()).data)
 
         return Response({"detail": "No active global messages"})
 
