@@ -1,6 +1,6 @@
 import logging
-
 from rest_framework import serializers, status
+from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -14,12 +14,37 @@ from .serializers import (
     ReplenishmentBalanceCreateSerializer,
     OrderDetailSerializer
 )
+from django_filters import rest_framework as filters
 
-logger = logging.getLogger(__name__)  # Настройка логгера
+logger = logging.getLogger(__name__)
+
+
+class OrderFilter(filters.FilterSet):
+    service = filters.CharFilter(field_name="service__name", lookup_expr="icontains", label="Сервис")
+    service_option = filters.CharFilter(field_name="service_option__name", lookup_expr="icontains",
+                                        label="Опции сервиса")
+
+    class Meta:
+        model = Order
+        fields = ["service", "status", "created_at", "completed", "quantity", "total_price"]
 
 
 class OrderGetAllView(ListAPIView):
     serializer_class = OrderGetAllSerializer
+    queryset = Order.objects.all()
+    filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
+    filterset_class = OrderFilter
+    ordering_fields = [
+        "service__name",  # Сортировка по сервису
+        "period",  # Сортировка по периоду
+        "quantity",  # Сортировка по количеству
+        "service_option__name",  # Сортировка по опциям сервиса
+        "status",  # Сортировка по статусу
+        "total_price",  # Сортировка по цене
+        "created_at",  # Сортировка по дате создания
+        "completed",  # Сортировка по дате завершения
+    ]
+    ordering = ["-created_at"]  # Сортировка по умолчанию
 
     def get_queryset(self):
         user__pk = self.request.user.pk

@@ -19,3 +19,4 @@ gunicorn
 drf-yasg==1.21.8
 django-axes[ipware]
 plisio
+django-filter
