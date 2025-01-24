@@ -1,6 +1,19 @@
 from djoser.serializers import UserCreatePasswordRetypeSerializer, SetUsernameSerializer
-from .models import CustomerUser, GlobalMessage, BalanceHistory, BalanceTopUp
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+from rest_framework.serializers import Serializer, CharField
+
+from .models import CustomerUser, GlobalMessage, BalanceHistory, BalanceTopUp
+
+
+class ResetPasswordSerializer(Serializer):
+    new_password = CharField(write_only=True, min_length=8)
+
+    def validate(self, data):
+        if 'new_password' not in data:
+            raise ValidationError({'new_password': 'This field is required.'})
+        return data
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,6 +55,7 @@ class GlobalMessageSerializer(serializers.ModelSerializer):
         instance.is_active = False  # Деактивируем сообщение
         instance.save()
         return instance
+
 
 class BalanceHistorySerializer(serializers.ModelSerializer):
     class Meta:

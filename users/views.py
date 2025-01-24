@@ -3,9 +3,12 @@ import logging
 import uuid
 
 from django.conf import settings
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.http import urlsafe_base64_decode
+from django.core.mail import send_mail
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from plisio import PlisioClient, CryptoCurrency, FiatCurrency
 from rest_framework import generics, permissions
 from rest_framework import status
@@ -13,10 +16,54 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import CustomerUser, GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
-from .serializers import GlobalMessageSerializer, BalanceHistorySerializer
+from .models import CustomerUser
+from .models import GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
+from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, ResetPasswordSerializer
 
 logger = logging.getLogger(__name__)
+
+
+class RequestPasswordResetView(APIView):
+    """Эндпоинт для запроса сброса пароля"""
+
+    def post(self, request):
+        email = request.data.get('email')
+        try:
+            user = CustomerUser.objects.get(email=email)
+            token_generator = PasswordResetTokenGenerator()
+            token = token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
+            subject = "Password Reset Request"
+            message = f"Use the link below to reset your password:\n{reset_url}"
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+
+            return Response({'detail': 'Password reset email sent.'}, status=status.HTTP_200_OK)
+        except CustomerUser.DoesNotExist:
+            return Response({'detail': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ResetPasswordView(APIView):
+    """Эндпоинт для сброса пароля"""
+
+    def post(self, request, uid, token):
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            user_id = force_str(urlsafe_base64_decode(uid))
+            user = CustomerUser.objects.get(pk=user_id)
+            token_generator = PasswordResetTokenGenerator()
+
+            if token_generator.check_token(user, token):
+                user.set_password(serializer.validated_data['new_password'])
+                user.save()
+                return Response({'detail': 'Password reset successful.'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'detail': 'Invalid token or expired link.'}, status=status.HTTP_400_BAD_REQUEST)
+        except (CustomerUser.DoesNotExist, ValueError, TypeError):
+            return Response({'detail': 'Invalid token or user not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ActivateUser(APIView):
@@ -210,4 +257,3 @@ class PlisioWebhookView(APIView):
             logger.info("⏳ Платёж в процессе.")
 
         return Response({'detail': 'Webhook успешно обработан'}, status=status.HTTP_200_OK)
-
