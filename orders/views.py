@@ -26,7 +26,7 @@ class OrderFilter(filters.FilterSet):
 
     class Meta:
         model = Order
-        fields = ["service", "status", "created_at", "completed", "quantity", "total_price"]
+        fields = ["id", "service", "status", "created_at", "completed", "quantity", "total_price"]
 
 
 class OrderGetAllView(ListAPIView):
@@ -35,14 +35,15 @@ class OrderGetAllView(ListAPIView):
     filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
     filterset_class = OrderFilter
     ordering_fields = [
-        "service__name",  # Сортировка по сервису
-        "period",  # Сортировка по периоду
-        "quantity",  # Сортировка по количеству
-        "service_option__name",  # Сортировка по опциям сервиса
-        "status",  # Сортировка по статусу
-        "total_price",  # Сортировка по цене
-        "created_at",  # Сортировка по дате создания
-        "completed",  # Сортировка по дате завершения
+        "id",
+        "service__name",
+        "period",
+        "quantity",
+        "service_option__name",
+        "status",
+        "total_price",
+        "created_at",
+        "completed",
     ]
     ordering = ["-created_at"]  # Сортировка по умолчанию
 

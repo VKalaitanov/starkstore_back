@@ -8,6 +8,7 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
     required_field = serializers.StringRelatedField(many=True)
     points = serializers.StringRelatedField(many=True)
     price_per_unit = serializers.DecimalField(source='price_per_unit.amount', max_digits=15, decimal_places=2)
+    is_interval_required = serializers.BooleanField(read_only=True)
     interval = serializers.IntegerField(required=False, allow_null=True)
     video_link = serializers.URLField(read_only=True)
     service_name = serializers.CharField(source='service.name', read_only=True)
@@ -27,7 +28,8 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
             'required_field',
             'points',
             'admin_contact_message',
-            'interval'
+            'interval',
+            'is_interval_required'
         ]
 
     def get_discount_percentage(self, obj):
