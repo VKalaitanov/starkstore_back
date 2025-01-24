@@ -39,9 +39,9 @@ class RequestPasswordResetView(APIView):
 
             # Используем HTML-шаблон
             subject = "Password Reset Request"
-            message = render_to_string('emails/password_reset_email.html', {
+            message = render_to_string('email/password_reset_email.html', {
                 'protocol': 'https',
-                'domain': settings.FRONTEND_DOMAIN,
+                'domain': settings.FRONTEND_URL,
                 'uid': uid,
                 'token': token,
                 'site_name': 'STARKSTORE',
