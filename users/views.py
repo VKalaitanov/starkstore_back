@@ -7,6 +7,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from plisio import PlisioClient, CryptoCurrency, FiatCurrency
@@ -35,9 +36,19 @@ class RequestPasswordResetView(APIView):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
 
             reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
+
+            # Используем HTML-шаблон
             subject = "Password Reset Request"
-            message = f"Use the link below to reset your password:\n{reset_url}"
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+            message = render_to_string('emails/password_reset_email.html', {
+                'protocol': 'https',
+                'domain': settings.FRONTEND_DOMAIN,
+                'uid': uid,
+                'token': token,
+                'site_name': 'STARKSTORE',
+            })
+
+            # Отправка email
+            send_mail(subject, '', settings.DEFAULT_FROM_EMAIL, [email], html_message=message)
 
             return Response({'detail': 'Password reset email sent.'}, status=status.HTTP_200_OK)
         except CustomerUser.DoesNotExist:
