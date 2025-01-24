@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class RequestPasswordResetView(APIView):
-    """Эндпоинт для запроса сброса пароля"""
+    """Эндпоинт для запроса сброса пароля """
 
     def post(self, request):
         email = request.data.get('email')
