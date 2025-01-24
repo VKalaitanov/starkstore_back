@@ -46,7 +46,6 @@ class RequestPasswordResetView(APIView):
                 'token': token,
                 'site_name': 'STARKSTORE',
             })
-
             # Отправка email
             send_mail(subject, '', settings.DEFAULT_FROM_EMAIL, [email], html_message=message)
 
