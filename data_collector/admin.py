@@ -1,15 +1,17 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from rangefilter.filters import DateRangeFilter
 
-from .models import DailyOrderAnalytics, AllTimeOrderAnalytics
+from .models import AllTimeOrderAnalytics
+from .models import DailyOrderAnalytics
 
 
 @admin.register(DailyOrderAnalytics)
 class DailyOrderAnalyticsAdmin(admin.ModelAdmin):
     list_display = ['date', 'total_orders', 'completed_orders', 'total_revenue']
-    list_filter = ['date']  # Фильтр по дате
+    list_filter = [('date', DateRangeFilter)]  # Фильтр по диапазону дат
     readonly_fields = ['date', 'total_orders', 'completed_orders', 'total_revenue', 'get_table_history_orders']
-    actions = ['download_selected_statistics']  # Кастомное действие
+    actions = ['download_selected_statistics']
 
     @admin.display(description='Таблица завершенных заказов за 1 день')
     def get_table_history_orders(self, obj: DailyOrderAnalytics):
@@ -71,7 +73,7 @@ class DailyOrderAnalyticsAdmin(admin.ModelAdmin):
 
         return response
 
-    download_selected_statistics.short_description = 'Скачать статистику по выбранным дням'
+    download_selected_statistics.short_description = 'Скачать статистику за выбранные даты'
 
     def has_add_permission(self, request):
         return False
