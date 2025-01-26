@@ -121,7 +121,7 @@ class BalanceHistory(models.Model):
     new_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
     create_time = models.DateTimeField(auto_now_add=True)
     order = models.ForeignKey(
-        'Order',
+        'orders.Order',
         on_delete=models.SET_NULL,
         null=True, blank=True,
         related_name='balance_history'
