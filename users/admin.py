@@ -87,7 +87,7 @@ class AdminCustomerUser(admin.ModelAdmin):
         if history_balance:
             for item in history_balance:
                 if item.order:
-                    order_link = f"<a href='/admin/orders/order/{item.order.pk}/change/'>{item.order.service_option}</a>"
+                    order_link = f"<a href='/api/admin/orders/order/{item.order.pk}/change/'>{item.order.service_option}</a>"
                 else:
                     order_link = "Нет связанных заказов"
 
