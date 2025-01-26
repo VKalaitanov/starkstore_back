@@ -1,5 +1,3 @@
-import uuid
-
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -122,6 +120,16 @@ class BalanceHistory(models.Model):
     old_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
     new_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
     create_time = models.DateTimeField(auto_now_add=True)
+    order = models.ForeignKey(
+        'Order',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='balance_history'
+    )
+
+    class Meta:
+        verbose_name = "История баланса"
+        verbose_name_plural = "Истории балансов"
 
 
 class GlobalMessage(models.Model):

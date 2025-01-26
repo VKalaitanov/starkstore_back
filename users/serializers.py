@@ -58,9 +58,21 @@ class GlobalMessageSerializer(serializers.ModelSerializer):
 
 
 class BalanceHistorySerializer(serializers.ModelSerializer):
+    order_details = serializers.SerializerMethodField()
+
     class Meta:
         model = BalanceHistory
-        fields = ['old_balance', 'new_balance', 'create_time']
+        fields = ['old_balance', 'new_balance', 'create_time', 'order_details']
+
+    def get_order_details(self, obj):
+        if obj.order:
+            return {
+                'service': obj.order.service.name,
+                'service_option': obj.order.service_option.name,
+                'quantity': obj.order.quantity,
+                'total_price': str(obj.order.total_price),
+            }
+        return None
 
 
 class BalanceTopUpSerializer(serializers.ModelSerializer):
