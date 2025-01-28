@@ -157,4 +157,5 @@ class GlobalMessageAdmin(admin.ModelAdmin):
         }),
     )
 
-admin.site.register(BalanceTopUp, InfoMessage)
+admin.site.register(BalanceTopUp)
+admin.site.register(InfoMessage)
