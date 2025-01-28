@@ -273,6 +273,8 @@ class InfoMessageView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        messages = InfoMessage.objects.last()
-        serializer = InfoMessageSerializer(messages, many=True)
+        message = InfoMessage.objects.last()
+        if not message:
+            return Response({"detail": "No messages found."}, status=404)
+        serializer = InfoMessageSerializer(message)
         return Response(serializer.data)
