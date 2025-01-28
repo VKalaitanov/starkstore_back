@@ -83,6 +83,7 @@ class BalanceTopUpSerializer(serializers.ModelSerializer):
 
 
 class InfoMessageSerializer(serializers.ModelSerializer):
-    model = InfoMessage
-    fields = ['message']
-    read_only_fields = ['message']
+    class Meta:
+        model = InfoMessage
+        fields = ['massage']
+        read_only_fields = ['massage']

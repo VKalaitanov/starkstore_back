@@ -17,7 +17,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import CustomerUser
+from .models import CustomerUser, InfoMessage
 from .models import GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
 from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, ResetPasswordSerializer, \
     InfoMessageSerializer
@@ -270,5 +270,9 @@ class PlisioWebhookView(APIView):
 
 
 class InfoMessageView(APIView):
-    serializer_class = InfoMessageSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        messages = InfoMessage.objects.last()
+        serializer = InfoMessageSerializer(messages, many=True)
+        return Response(serializer.data)
