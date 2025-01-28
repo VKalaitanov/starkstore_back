@@ -192,3 +192,7 @@ class BalanceTopUp(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.amount} - {self.status}"
+
+class InfoMessage(models.Model):
+    massage = models.CharField('Инфо сообщение', max_length=500)
+    created_at = models.DateTimeField("Дата создания", auto_now_add=True)

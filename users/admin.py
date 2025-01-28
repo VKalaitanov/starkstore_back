@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import CustomerUser, UserServiceDiscount, GlobalMessage, BalanceTopUp
+from .models import CustomerUser, UserServiceDiscount, GlobalMessage, BalanceTopUp, InfoMessage
 
 
 @admin.register(CustomerUser)
@@ -157,4 +157,4 @@ class GlobalMessageAdmin(admin.ModelAdmin):
         }),
     )
 
-admin.site.register(BalanceTopUp)
+admin.site.register(BalanceTopUp, InfoMessage)

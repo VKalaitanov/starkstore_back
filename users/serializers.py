@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import Serializer, CharField
 
-from .models import CustomerUser, GlobalMessage, BalanceHistory, BalanceTopUp
+from .models import CustomerUser, GlobalMessage, BalanceHistory, BalanceTopUp, InfoMessage
 
 
 class ResetPasswordSerializer(Serializer):
@@ -80,3 +80,9 @@ class BalanceTopUpSerializer(serializers.ModelSerializer):
         model = BalanceTopUp
         fields = ['id', 'user', 'amount', 'invoice_id', 'status', 'create_time']
         read_only_fields = ['id', 'invoice_id', 'status', 'create_time']
+
+
+class InfoMessageSerializer(serializers.ModelSerializer):
+    model = InfoMessage
+    fields = ['message']
+    read_only_fields = ['message']

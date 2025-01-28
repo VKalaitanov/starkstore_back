@@ -266,3 +266,8 @@ class PlisioWebhookView(APIView):
             logger.info("⏳ Платёж в процессе.")
 
         return Response({'detail': 'Webhook успешно обработан'}, status=status.HTTP_200_OK)
+
+
+class InfoMessageView(APIView):
+    serializer_class = BalanceHistorySerializer
+    permission_classes = [permissions.IsAuthenticated]
