@@ -19,7 +19,8 @@ from rest_framework.views import APIView
 
 from .models import CustomerUser
 from .models import GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
-from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, ResetPasswordSerializer
+from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, ResetPasswordSerializer, \
+    InfoMessageSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -269,5 +270,5 @@ class PlisioWebhookView(APIView):
 
 
 class InfoMessageView(APIView):
-    serializer_class = BalanceHistorySerializer
+    serializer_class = InfoMessageSerializer
     permission_classes = [permissions.IsAuthenticated]
