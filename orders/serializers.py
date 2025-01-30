@@ -32,6 +32,7 @@ class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
     class Meta:
         model = Order
         fields = [
+            'id',
             'service',
             'service_option',
             'user',
