@@ -16,21 +16,21 @@ class ControlBalance:
 
             # Проверяем наличие данных
             if not service_option_id:
-                raise serializers.ValidationError({"detail": "Необходимо указать опцию сервиса."})
+                raise serializers.ValidationError("Необходимо указать опцию сервиса.")
 
             if not quantity or int(quantity) <= 0:
-                raise serializers.ValidationError({"detail": "Количество должно быть больше 0."})
+                raise serializers.ValidationError("Количество должно быть больше 0.")
 
             # Получаем объекты Service и ServiceOption
             try:
                 service_option = ServiceOption.objects.get(id=service_option_id)
             except ServiceOption.DoesNotExist:
-                raise serializers.ValidationError({"detail": "Указанная опция сервиса не существует."})
+                raise serializers.ValidationError("Указанная опция сервиса не существует.")
 
             try:
                 service = Service.objects.get(id=service_id)
             except Service.DoesNotExist:
-                raise serializers.ValidationError({"detail": "Указанный сервис не существует."})
+                raise serializers.ValidationError("Указанный сервис не существует.")
 
             # Создаём временный объект Order для расчёта цены
             temp_order = Order(
@@ -45,7 +45,7 @@ class ControlBalance:
 
             # Проверяем баланс пользователя
             if value.balance < total_price:
-                raise serializers.ValidationError({"detail": "У вас недостаточно средств для совершения покупки."})
+                raise serializers.ValidationError("У вас недостаточно средств для совершения покупки.")
 
             # Списываем сумму (если всё успешно)
             value.balance -= total_price
@@ -61,4 +61,4 @@ class ControlBalance:
         except Exception as e:
             # Логируем неожиданные ошибки
             logger.error(f"Непредвиденная ошибка: {str(e)}")
-            raise serializers.ValidationError({"detail": "Произошла ошибка при проверке баланса."})
+            raise serializers.ValidationError("Произошла ошибка при проверке баланса.")

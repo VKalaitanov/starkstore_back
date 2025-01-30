@@ -66,11 +66,10 @@ class ServiceListSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.Serializer):
-    id = serializers.IntegerField()
     category = serializers.CharField()
 
     class Meta:
-        fields = ['id', 'category']
+        fields = ['category']
 
 
 class PopularServiceOptionSerializer(serializers.ModelSerializer):
