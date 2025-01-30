@@ -44,11 +44,23 @@ class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
         ]
 
     def validate(self, data):
+        user = self.context["request"].user
         service_option = data.get('service_option')
+        service = data.get('service')
+        quantity = data.get('quantity')
 
-        # Проверяем, что опция указана
+        # Проверяем, что все нужные данные переданы
         if not service_option:
             raise serializers.ValidationError({"detail": "Опция сервиса не указана."})
+
+        if not quantity or int(quantity) <= 0:
+            raise serializers.ValidationError({"detail": "Количество должно быть больше 0."})
+
+        if not service:
+            raise serializers.ValidationError({"detail": "Сервис не указан."})
+
+        # Проверяем баланс
+        self.validate_balance(user, service_option, service, quantity)
 
         # Если интервал требуется, но не указан
         if service_option.is_interval_required and not data.get('interval'):
@@ -61,7 +73,6 @@ class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
         return data
 
     def create(self, validated_data):
-        # При создании заказа, если period не был передан, он будет взят из service_option
         service_option = validated_data.get('service_option')
         period = validated_data.get('period', service_option.period)  # Берем period из service_option
         validated_data['period'] = period  # Устанавливаем period в validated_data
