@@ -23,7 +23,7 @@ class ControlBalance:
 
             # Проверяем баланс пользователя
             if user.balance < total_price:
-                raise serializers.ValidationError({"detail": "У вас недостаточно средств для совершения покупки."})
+                raise serializers.ValidationError({"detail": "You do not have enough money to make a purchase."})
 
             return total_price
 
@@ -32,4 +32,4 @@ class ControlBalance:
             raise
         except Exception as e:
             logger.error(f"Непредвиденная ошибка: {str(e)}")
-            raise serializers.ValidationError({"detail": "Произошла ошибка при проверке баланса."})
+            raise serializers.ValidationError({"detail": "There was an error when checking the balance."})

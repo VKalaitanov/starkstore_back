@@ -51,20 +51,20 @@ class OrderCreateSerializer(serializers.ModelSerializer, ControlBalance):
 
         # Проверяем, что все нужные данные переданы
         if not service_option:
-            raise serializers.ValidationError({"detail": "Опция сервиса не указана."})
+            raise serializers.ValidationError({"detail": "The service option is not indicated."})
 
         if not quantity or int(quantity) <= 0:
-            raise serializers.ValidationError({"detail": "Количество должно быть больше 0."})
+            raise serializers.ValidationError({"detail": "The quantity must be greater than 0."})
 
         if not service:
-            raise serializers.ValidationError({"detail": "Сервис не указан."})
+            raise serializers.ValidationError({"detail": "The service is not indicated."})
 
         # Проверяем баланс
         self.validate_balance(user, service_option, service, quantity)
 
         # Если интервал требуется, но не указан
         if service_option.is_interval_required and not data.get('interval'):
-            raise serializers.ValidationError({"detail": "Для выбранной опции требуется указать интервал."})
+            raise serializers.ValidationError({"detail": "For the selected option, you need to specify the interval."})
 
         # Если интервал не требуется, но передан, удаляем его из данных
         if not service_option.is_interval_required and 'interval' in data:
