@@ -64,12 +64,14 @@ class Order(models.Model):
 
         old_balance = self.user.balance
         self.user.balance -= self.total_price
-        self.user.save()
+
+        # Пропускаем запись истории, т.к. создадим её вручную ниже
+        self.user.save(skip_history=True)
 
         # Сохраняем заказ
         super(Order, self).save(*args, **kwargs)
 
-        # Добавляем запись в историю баланса
+        # Добавляем запись в историю баланса (указываем order, чтобы был контекст)
         BalanceHistory.objects.create(
             user=self.user,
             old_balance=old_balance,
