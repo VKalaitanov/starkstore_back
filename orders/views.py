@@ -70,9 +70,9 @@ class OrderCreateView(CreateAPIView):
         return response
 
     def perform_create(self, serializer):
+        logger.info(f"📥 Входящие данные от фронта: {self.request.data}")
         try:
             logger.info(f"Создание заказа: данные={serializer.validated_data}")
-            logger.debug(f"Validated data before save: {serializer.validated_data}")
             order = serializer.save()
             logger.info(f"Заказ успешно создан: ID={order.id}")
         except Exception as e:
