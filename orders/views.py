@@ -62,7 +62,7 @@ class OrderCreateView(CreateAPIView):
         response = exception_handler(exc, self.get_renderer_context())
         if response is None:
             return super().handle_exception(exc)
-
+        logger.error(f"Ошибка API: {response.data}")
         # Добавляем логирование
         if isinstance(exc, serializers.ValidationError):
             logger.error(f"Ошибка валидации: {exc.detail}")
@@ -72,6 +72,7 @@ class OrderCreateView(CreateAPIView):
     def perform_create(self, serializer):
         try:
             logger.info(f"Создание заказа: данные={serializer.validated_data}")
+            logger.debug(f"Validated data before save: {serializer.validated_data}")
             order = serializer.save()
             logger.info(f"Заказ успешно создан: ID={order.id}")
         except Exception as e:
