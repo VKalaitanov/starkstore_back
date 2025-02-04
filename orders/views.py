@@ -77,7 +77,7 @@ class OrderCreateView(CreateAPIView):
             logger.info(f"Заказ успешно создан: ID={order.id}")
         except Exception as e:
             logger.error(f"Ошибка при создании заказа: {str(e)}")
-            raise serializers.ValidationError({"detail": "Failed to create order. Check the data."})
+            raise serializers.ValidationError({"detail": "Failed to create order. Check the data"})
 
 
 class ReplenishmentBalanceCreateView(CreateAPIView):
