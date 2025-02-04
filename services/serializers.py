@@ -11,6 +11,7 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
     is_interval_required = serializers.BooleanField(read_only=True)
     interval = serializers.IntegerField(required=False, allow_null=True)
     video_link = serializers.URLField(read_only=True)
+    service_id = serializers.IntegerField(source='service.pk', read_only=True)
     service_name = serializers.CharField(source='service.name', read_only=True)
     admin_contact_message = serializers.CharField(read_only=True)
 
@@ -18,6 +19,7 @@ class ServiceOptionSerializer(serializers.ModelSerializer):
         model = ServiceOption
         fields = [
             'id',
+            'service_id',
             'video_link',
             'service_name',
             'category',
