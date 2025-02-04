@@ -60,7 +60,7 @@ class Order(models.Model):
         self.total_price = self.calculate_total_price()
 
         if self.user.balance < self.total_price:
-            raise ValueError({"detail": "У пользователя недостаточно средств для завершения покупки."})
+            raise ValueError({"detail": "У пользователя недостаточно средств для завершения покупки"})
 
         super(Order, self).save(*args, **kwargs)
 
