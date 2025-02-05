@@ -58,20 +58,22 @@ class Order(models.Model):
         if self.user.balance < self.total_price:
             raise ValueError({"detail": "У пользователя недостаточно средств для завершения покупки."})
 
+            # Сначала сохраняем заказ
+        super(Order, self).save(*args, **kwargs)
+
+        # Затем обновляем баланс пользователя
         old_balance = self.user.balance
         self.user.balance -= self.total_price
-        self.user.save(update_fields=["balance"])  # Сохраняем только баланс, чтобы избежать других изменений
+        self.user.save(update_fields=["balance"])
 
-        # Записываем историю перед сохранением заказа
+        # Создаем запись в истории баланса, уже имея ID заказа
         BalanceHistory.objects.create(
             user=self.user,
             old_balance=old_balance,
             new_balance=self.user.balance,
-            order=self,
+            order=self,  # Теперь order уже сохранен и его можно связать
             transaction_type=BalanceHistory.TransactionType.PURCHASE
         )
-
-        super(Order, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Заказ"
