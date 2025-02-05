@@ -65,16 +65,16 @@ class CustomerUser(AbstractUser):
 
     objects = CustomerUserManager()
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, update_balance_history=True, **kwargs):
         if self.pk is not None:
             old_balance = CustomerUser.objects.get(pk=self.pk).balance
-            if old_balance != self.balance and not kwargs.get('skip_balance_history', False):
-                transaction_type = BalanceHistory.TransactionType.ADMIN_DEPOSIT
+            if old_balance != self.balance and update_balance_history:
+                # Если баланс изменил админ, записываем в историю
                 BalanceHistory.objects.create(
                     user=self,
                     old_balance=old_balance,
                     new_balance=self.balance,
-                    transaction_type=transaction_type
+                    transaction_type=BalanceHistory.TransactionType.ADMIN_DEPOSIT
                 )
         super().save(*args, **kwargs)
 
