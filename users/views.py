@@ -142,8 +142,10 @@ class InfoMessageView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        last_message = InfoMessage.objects.order_by('-created_at').first()
-        serializer = InfoMessageSerializer(last_message)
+        message = InfoMessage.objects.last()  # Возьмем последнее сообщение
+        if not message:  # Если сообщений нет
+            return Response({"detail": "No messages found."}, status=404)
+        serializer = InfoMessageSerializer(message)
         return Response(serializer.data)
 
 
