@@ -72,7 +72,7 @@ class Order(models.Model):
             old_balance=old_balance,
             new_balance=self.user.balance,
             order=self,  # Теперь order уже сохранен и его можно связать
-            transaction_type=BalanceHistory.TransactionType.PURCHASE
+            transaction_type=BalanceHistory.TransactionType.PURCHASE.value
         )
 
     class Meta:

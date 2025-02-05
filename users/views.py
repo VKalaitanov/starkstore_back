@@ -273,7 +273,7 @@ class PlisioWebhookView(APIView):
                     user=user,
                     old_balance=old_balance,
                     new_balance=user.balance,
-                    transaction_type=BalanceHistory.TransactionType.DEPOSIT
+                    transaction_type=BalanceHistory.TransactionType.DEPOSIT.value
                 )
             except Exception as exc:
                 logger.error(f"История баланса не была сохранена, ошибка: {exc}")
