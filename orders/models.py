@@ -64,15 +64,13 @@ class Order(models.Model):
 
         super(Order, self).save(*args, **kwargs)
 
-        # Проверяем, нет ли уже записи для этого заказа в BalanceHistory
-        if not BalanceHistory.objects.filter(order=self).exists():
-            BalanceHistory.objects.create(
-                user=self.user,
-                old_balance=old_balance,
-                new_balance=self.user.balance,
-                transaction_type=BalanceHistory.TransactionType.PURCHASE,
-                order=self
-            )
+        BalanceHistory.objects.create(
+            user=self.user,
+            old_balance=old_balance,
+            new_balance=self.user.balance,
+            transaction_type=BalanceHistory.TransactionType.PURCHASE,
+            order=self
+        )
 
     class Meta:
         verbose_name = "Заказ"

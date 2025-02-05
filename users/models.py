@@ -57,6 +57,7 @@ class CustomerUser(AbstractUser):
     def __str__(self):
         return self.email
 
+
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи(email, баланс...)"
@@ -68,13 +69,13 @@ class CustomerUser(AbstractUser):
         if self.pk is not None:
             old_balance = CustomerUser.objects.get(pk=self.pk).balance
             if old_balance != self.balance:
-                # Записываем изменения в историю
-                BalanceHistory.objects.create(  # type: ignore
+                transaction_type = BalanceHistory.TransactionType.ADMIN_DEPOSIT
+                BalanceHistory.objects.create(
                     user=self,
                     old_balance=old_balance,
                     new_balance=self.balance,
+                    transaction_type=transaction_type
                 )
-
         super().save(*args, **kwargs)
 
 
@@ -119,25 +120,24 @@ class BalanceHistory(models.Model):
     class TransactionType(models.TextChoices):
         DEPOSIT = "deposit", "Пополнение"
         PURCHASE = "purchase", "Покупка услуги"
+        ADMIN_DEPOSIT = "admin_deposit", "Пополнение админом"
 
-    user = models.ForeignKey('CustomerUser', on_delete=models.CASCADE, verbose_name='Пользователь', related_name='balance_history')
+    user = models.ForeignKey(
+        'CustomerUser', on_delete=models.CASCADE,
+        verbose_name='Пользователь', related_name='balance_history'
+    )
     old_balance = MoneyField('Старый баланс', decimal_places=2, default=0, default_currency='USD', max_digits=15)
     new_balance = MoneyField('Новый баланс', decimal_places=2, default=0, default_currency='USD', max_digits=15)
     create_time = models.DateTimeField('Дата создания', auto_now_add=True)
     transaction_type = models.CharField(
         'Тип транзакции',
         max_length=20,
-        null=True,
-        blank=True,
         choices=TransactionType.choices,
         default=TransactionType.PURCHASE,
     )
     order = models.ForeignKey(
-        'orders.Order',
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name='balance_history',
-        verbose_name='Заказ'
+        'orders.Order', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='balance_history', verbose_name='Заказ'
     )
 
     class Meta:
