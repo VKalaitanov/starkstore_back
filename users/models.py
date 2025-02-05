@@ -65,17 +65,18 @@ class CustomerUser(AbstractUser):
 
     objects = CustomerUserManager()
 
-    def save(self, *args, **kwargs):
-        # if self.pk is not None:
-        #     old_balance = CustomerUser.objects.get(pk=self.pk).balance
-        #     if old_balance != self.balance and update_history:
-        #         BalanceHistory.objects.create(
-        #             user=self,
-        #             old_balance=old_balance,
-        #             new_balance=self.balance,
-        #             transaction_type=BalanceHistory.TransactionType.ADMIN_DEPOSIT
-        #         )
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.pk is not None:
+    #         old_balance = CustomerUser.objects.get(pk=self.pk).balance
+    #         if old_balance != self.balance:
+    #             transaction_type = BalanceHistory.TransactionType.ADMIN_DEPOSIT
+    #             BalanceHistory.objects.create(
+    #                 user=self,
+    #                 old_balance=old_balance,
+    #                 new_balance=self.balance,
+    #                 transaction_type=transaction_type
+    #             )
+    #     super().save(*args, **kwargs)
 
 
 class UserServiceDiscount(models.Model):

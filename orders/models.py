@@ -60,8 +60,9 @@ class Order(models.Model):
 
         old_balance = self.user.balance
         self.user.balance -= self.total_price
+        self.user.save(update_fields=["balance"])  # Сохраняем только баланс, чтобы избежать других изменений
 
-        # Записываем историю перед сохранением
+        # Записываем историю перед сохранением заказа
         BalanceHistory.objects.create(
             user=self.user,
             old_balance=old_balance,
@@ -69,9 +70,6 @@ class Order(models.Model):
             order=self,
             transaction_type=BalanceHistory.TransactionType.PURCHASE
         )
-
-        # Сохраняем пользователя только после записи истории
-        self.user.save()
 
         super(Order, self).save(*args, **kwargs)
 
