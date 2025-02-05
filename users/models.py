@@ -65,29 +65,16 @@ class CustomerUser(AbstractUser):
 
     objects = CustomerUserManager()
 
-    def save(self, *args, update_balance_history=True, **kwargs):
-        if self.pk is not None:  # Проверяем, что запись уже существует
+    def save(self, *args, update_history=True, **kwargs):
+        if self.pk is not None:
             old_balance = CustomerUser.objects.get(pk=self.pk).balance
-            if old_balance != self.balance and update_balance_history:
-                # Проверяем, было ли изменение через админку
-                from django.contrib.admin.models import LogEntry
-                last_log = LogEntry.objects.filter(
-                    object_id=str(self.pk),
-                    content_type__model=self._meta.model_name
-                ).order_by('-action_time').first()
-
-                if last_log and last_log.action_flag == 2:  # Action 2 = редактирование
-                    transaction_type = BalanceHistory.TransactionType.ADMIN_DEPOSIT
-                else:
-                    transaction_type = BalanceHistory.TransactionType.DEPOSIT  # Обычное пополнение
-
+            if old_balance != self.balance and update_history:
                 BalanceHistory.objects.create(
                     user=self,
                     old_balance=old_balance,
                     new_balance=self.balance,
-                    transaction_type=transaction_type
+                    transaction_type=BalanceHistory.TransactionType.ADMIN_DEPOSIT
                 )
-
         super().save(*args, **kwargs)
 
 

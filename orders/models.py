@@ -1,4 +1,4 @@
-from django.db import models, transaction
+from django.db import models
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
 
@@ -60,17 +60,17 @@ class Order(models.Model):
 
         old_balance = self.user.balance
         self.user.balance -= self.total_price
-        self.user.save(update_balance_history=False)  # <- Не создаём историю в save()
 
-        super(Order, self).save(*args, **kwargs)
-
+        self.user.save(update_history=False)  # Отключаем автоматическую запись в историю!
+        # Записываем историю вручную
         BalanceHistory.objects.create(
             user=self.user,
             old_balance=old_balance,
             new_balance=self.user.balance,
-            transaction_type=BalanceHistory.TransactionType.PURCHASE,
-            order=self
+            transaction_type=BalanceHistory.TransactionType.PURCHASE
         )
+
+        super(Order, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Заказ"

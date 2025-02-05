@@ -266,7 +266,13 @@ class PlisioWebhookView(APIView):
             user = top_up.user
             old_balance = user.balance
             user.balance += top_up.amount
-            user.save(update_balance_history=False)
+            user.save(update_history=False)  # Отключаем автоматическую запись!
+            BalanceHistory.objects.create(
+                user=user,
+                old_balance=old_balance,
+                new_balance=user.balance,
+                transaction_type=BalanceHistory.TransactionType.DEPOSIT
+            )
             logger.info(f"✅ Баланс пользователя {user.username} пополнен на {top_up.amount}")
             logger.info("💸 Платёж успешно выполнен.")
             try:
