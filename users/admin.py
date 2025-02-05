@@ -91,7 +91,7 @@ class AdminCustomerUser(admin.ModelAdmin):
                 )
 
                 if item.order:
-                    order_link = f"<a href='/admin/orders/order/{item.order.pk}/change/'>{item.order.service_option}</a>"
+                    order_link = f"<a href='/api/admin/orders/order/{item.order.pk}/change/'>{item.order.service_option}</a>"
                 else:
                     order_link = "Пополнение через Plesio"
 
