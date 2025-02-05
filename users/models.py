@@ -116,20 +116,34 @@ class ReplenishmentBalance(models.Model):
 
 
 class BalanceHistory(models.Model):
-    user = models.ForeignKey('CustomerUser', on_delete=models.CASCADE, related_name='balance_history')
-    old_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
-    new_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
-    create_time = models.DateTimeField(auto_now_add=True)
+    class TransactionType(models.TextChoices):
+        DEPOSIT = "deposit", "Пополнение"
+        PURCHASE = "purchase", "Покупка услуги"
+
+    user = models.ForeignKey('CustomerUser', on_delete=models.CASCADE, verbose_name='Пользователь', related_name='balance_history')
+    old_balance = MoneyField('Старый баланс', decimal_places=2, default=0, default_currency='USD', max_digits=15)
+    new_balance = MoneyField('Новый баланс', decimal_places=2, default=0, default_currency='USD', max_digits=15)
+    create_time = models.DateTimeField('Дата создания', auto_now_add=True)
+    transaction_type = models.CharField(
+        'Тип транзакции',
+        max_length=20,
+        null=True,
+        blank=True,
+        choices=TransactionType.choices,
+        default=TransactionType.PURCHASE,
+    )
     order = models.ForeignKey(
         'orders.Order',
         on_delete=models.SET_NULL,
         null=True, blank=True,
-        related_name='balance_history'
+        related_name='balance_history',
+        verbose_name='Заказ'
     )
 
     class Meta:
         verbose_name = "История баланса"
         verbose_name_plural = "Истории балансов"
+
 
 
 class GlobalMessage(models.Model):

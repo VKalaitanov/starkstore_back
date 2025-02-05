@@ -44,19 +44,15 @@ class Order(models.Model):
             raise ValueError({"detail":f"Ошибка при расчёте цены: {str(e)}"})
 
     def save(self, *args, **kwargs):
-        # Устанавливаем период, если он не передан
         if not self.period:
             self.period = self.service_option.period
 
-        # Проверяем интервал
         if self.service_option.is_interval_required and not self.interval:
             raise ValueError({"detail": "Для выбранной опции требуется указать интервал."})
 
-        # Если интервал не требуется, устанавливаем его в None (вместо 1)
         if not self.service_option.is_interval_required:
             self.interval = None
 
-        # Рассчитываем общую стоимость
         self.total_price = self.calculate_total_price()
 
         if self.user.balance < self.total_price:
@@ -66,16 +62,17 @@ class Order(models.Model):
         self.user.balance -= self.total_price
         self.user.save()
 
-        # Сохраняем заказ
         super(Order, self).save(*args, **kwargs)
 
-        # Добавляем запись в историю баланса
-        BalanceHistory.objects.create(
-            user=self.user,
-            old_balance=old_balance,
-            new_balance=self.user.balance,
-            order=self
-        )
+        # Проверяем, нет ли уже записи для этого заказа в BalanceHistory
+        if not BalanceHistory.objects.filter(order=self).exists():
+            BalanceHistory.objects.create(
+                user=self.user,
+                old_balance=old_balance,
+                new_balance=self.user.balance,
+                transaction_type=BalanceHistory.TransactionType.PURCHASE,
+                order=self
+            )
 
     class Meta:
         verbose_name = "Заказ"
