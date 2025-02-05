@@ -61,14 +61,18 @@ class Order(models.Model):
         old_balance = self.user.balance
         self.user.balance -= self.total_price
 
-        self.user.save()  # Отключаем автоматическую запись в историю!
-        # Записываем историю вручную
+        # Записываем историю перед сохранением
         BalanceHistory.objects.create(
             user=self.user,
             old_balance=old_balance,
             new_balance=self.user.balance,
+            order=self,
             transaction_type=BalanceHistory.TransactionType.PURCHASE
         )
+
+        # Сохраняем пользователя только после записи истории
+        self.user.save()
+
         super(Order, self).save(*args, **kwargs)
 
     class Meta:

@@ -267,14 +267,6 @@ class PlisioWebhookView(APIView):
             old_balance = user.balance
             user.balance += top_up.amount
             user.save()  # Отключаем автоматическую запись!
-            BalanceHistory.objects.create(
-                user=user,
-                old_balance=old_balance,
-                new_balance=user.balance,
-                transaction_type=BalanceHistory.TransactionType.DEPOSIT
-            )
-            logger.info(f"✅ Баланс пользователя {user.username} пополнен на {top_up.amount}")
-            logger.info("💸 Платёж успешно выполнен.")
             try:
             # Записываем в историю
                 BalanceHistory.objects.create(
@@ -285,6 +277,8 @@ class PlisioWebhookView(APIView):
                 )
             except Exception as exc:
                 logger.error(f"История баланса не была сохранена, ошибка: {exc}")
+            logger.info(f"✅ Баланс пользователя {user.username} пополнен на {top_up.amount}")
+            logger.info("💸 Платёж успешно выполнен.")
         elif status_payment == 'error':
             top_up.status = 'failed'
             top_up.save()
