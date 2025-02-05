@@ -79,3 +79,6 @@ class Order(models.Model):
         verbose_name = "Заказ"
         verbose_name_plural = "Заказы"
         ordering = ['created_at']
+
+    def __str__(self):
+        return f'Заказ ID: {self.pk}, услуга: {self.service_option}, пользователь: {self.user}'
