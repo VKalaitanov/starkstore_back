@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
 
@@ -58,19 +58,20 @@ class Order(models.Model):
         if self.user.balance < self.total_price:
             raise ValueError({"detail": "У пользователя недостаточно средств для завершения покупки."})
 
-        old_balance = self.user.balance
-        self.user.balance -= self.total_price
-        self.user.save()
+        with transaction.atomic():
+            old_balance = self.user.balance
+            self.user.balance -= self.total_price
+            self.user.save(update_fields=['balance'])  # Обновляем только баланс, без вызова `save()`
 
-        super(Order, self).save(*args, **kwargs)
+            super(Order, self).save(*args, **kwargs)
 
-        BalanceHistory.objects.create(
-            user=self.user,
-            old_balance=old_balance,
-            new_balance=self.user.balance,
-            transaction_type=BalanceHistory.TransactionType.PURCHASE,
-            order=self
-        )
+            BalanceHistory.objects.create(
+                user=self.user,
+                old_balance=old_balance,
+                new_balance=self.user.balance,
+                transaction_type=BalanceHistory.TransactionType.PURCHASE,
+                order=self
+            )
 
     class Meta:
         verbose_name = "Заказ"

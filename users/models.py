@@ -68,7 +68,7 @@ class CustomerUser(AbstractUser):
     def save(self, *args, **kwargs):
         if self.pk is not None:
             old_balance = CustomerUser.objects.get(pk=self.pk).balance
-            if old_balance != self.balance:
+            if old_balance != self.balance and not kwargs.get('skip_balance_history', False):
                 transaction_type = BalanceHistory.TransactionType.ADMIN_DEPOSIT
                 BalanceHistory.objects.create(
                     user=self,

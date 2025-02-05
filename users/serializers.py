@@ -63,7 +63,7 @@ class BalanceHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BalanceHistory
-        fields = ['old_balance', 'new_balance', 'create_time', 'order_details']
+        fields = ['old_balance', 'new_balance', 'create_time', 'order_details', 'transaction_type']
 
     def get_order_details(self, obj):
         if obj.order:
