@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import CustomerUser, UserServiceDiscount, GlobalMessage, BalanceTopUp, InfoMessage
+from .models import CustomerUser, UserServiceDiscount, GlobalMessage, BalanceTopUp, InfoMessage, BalanceHistory
 
 
 @admin.register(CustomerUser)
@@ -70,45 +70,51 @@ class AdminCustomerUser(admin.ModelAdmin):
     @admin.display(description='История баланса')
     def get_history_balance(self, user: CustomerUser):
         table_html = """
-                        <table style="width:100%; border: 1px solid black; border-collapse: collapse;">
-                            <thead>
-                                <tr>
-                                    <th style="border: 1px solid black; padding: 5px;">Старый баланс</th>
-                                    <th style="border: 1px solid black; padding: 5px;">Новый баланс</th>
-                                    <th style="border: 1px solid black; padding: 5px;">Дата изменения</th>
-                                    <th style="border: 1px solid black; padding: 5px;">Связанный заказ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                        """
-        history_balance = user.balance_history.all()  # type: ignore
+            <table style="width:100%; border: 1px solid black; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid black; padding: 5px;">Тип</th>
+                        <th style="border: 1px solid black; padding: 5px;">Старый баланс</th>
+                        <th style="border: 1px solid black; padding: 5px;">Новый баланс</th>
+                        <th style="border: 1px solid black; padding: 5px;">Дата изменения</th>
+                        <th style="border: 1px solid black; padding: 5px;">Связанный заказ</th>
+                    </tr>
+                </thead>
+                <tbody>
+        """
+        history_balance = user.balance_history.all().order_by('-create_time')  # type: ignore
 
-        # Если есть записи в истории, добавляем строки
-        if history_balance:
+        if history_balance.exists():
             for item in history_balance:
+                transaction_type = dict(BalanceHistory.TransactionType.choices).get(
+                    item.transaction_type, item.transaction_type
+                )
+
                 if item.order:
                     order_link = f"<a href='/admin/orders/order/{item.order.pk}/change/'>{item.order.service_option}</a>"
                 else:
-                    order_link = "Нет связанных заказов"
+                    order_link = "Пополнение через Plesio"
 
                 table_html += f"""
-                        <tr>
-                            <td style="border: 1px solid black; padding: 5px;">{item.old_balance}</td>
-                            <td style="border: 1px solid black; padding: 5px;">{item.new_balance}</td>
-                            <td style="border: 1px solid black; padding: 5px;">{item.create_time}</td>
-                            <td style="border: 1px solid black; padding: 5px;">{order_link}</td>
-                        </tr>
-                        """
+                    <tr>
+                        <td style="border: 1px solid black; padding: 5px;">{transaction_type}</td>
+                        <td style="border: 1px solid black; padding: 5px;">{item.old_balance}</td>
+                        <td style="border: 1px solid black; padding: 5px;">{item.new_balance}</td>
+                        <td style="border: 1px solid black; padding: 5px;">{item.create_time}</td>
+                        <td style="border: 1px solid black; padding: 5px;">{order_link}</td>
+                    </tr>
+                """
         else:
             table_html += """
-                        <tr>
-                            <td colspan="4" style="border: 1px solid black; padding: 5px; text-align: center;">История баланса отсутствует</td>
-                        </tr>
-                        """
+                <tr>
+                    <td colspan="5" style="border: 1px solid black; padding: 5px; text-align: center;">
+                        История баланса отсутствует
+                    </td>
+                </tr>
+            """
 
         table_html += "</tbody></table>"
 
-        # Возвращаем HTML-таблицу
         return format_html(table_html)
 
     def has_add_permission(self, request):
