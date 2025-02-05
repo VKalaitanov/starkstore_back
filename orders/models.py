@@ -2,7 +2,7 @@ from django.db import models
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
 
-from users.models import CustomerUser
+from users.models import CustomerUser, BalanceHistory
 from services.models import Service, ServiceOption
 
 
@@ -50,7 +50,7 @@ class Order(models.Model):
 
         # Проверяем интервал
         if self.service_option.is_interval_required and not self.interval:
-            raise ValueError({"detail":"Для выбранной опции требуется указать интервал."})
+            raise ValueError({"detail": "Для выбранной опции требуется указать интервал."})
 
         # Если интервал не требуется, устанавливаем его в None (вместо 1)
         if not self.service_option.is_interval_required:
@@ -60,9 +60,22 @@ class Order(models.Model):
         self.total_price = self.calculate_total_price()
 
         if self.user.balance < self.total_price:
-            raise ValueError({"detail": "У пользователя недостаточно средств для завершения покупки"})
+            raise ValueError({"detail": "У пользователя недостаточно средств для завершения покупки."})
 
+        old_balance = self.user.balance
+        self.user.balance -= self.total_price
+        self.user.save()
+
+        # Сохраняем заказ
         super(Order, self).save(*args, **kwargs)
+
+        # Добавляем запись в историю баланса
+        BalanceHistory.objects.create(
+            user=self.user,
+            old_balance=old_balance,
+            new_balance=self.user.balance,
+            order=self
+        )
 
     class Meta:
         verbose_name = "Заказ"

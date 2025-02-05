@@ -17,9 +17,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import CustomerUser
+from .models import CustomerUser, InfoMessage
 from .models import GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
-from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, ResetPasswordSerializer
+from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, ResetPasswordSerializer, \
+    InfoMessageSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +136,15 @@ class GlobalMessageView(APIView):
             return Response({"detail": "Message closed for user"})
 
         return Response({"detail": "Message not found or already inactive"}, status=404)
+
+
+class InfoMessageView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        last_message = InfoMessage.objects.order_by('-created_at').first()
+        serializer = InfoMessageSerializer(last_message)
+        return Response(serializer.data)
 
 
 class BalanceHistoryView(generics.ListAPIView):

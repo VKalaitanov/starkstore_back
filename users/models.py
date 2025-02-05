@@ -1,5 +1,3 @@
-import uuid
-
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -122,6 +120,16 @@ class BalanceHistory(models.Model):
     old_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
     new_balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15)
     create_time = models.DateTimeField(auto_now_add=True)
+    order = models.ForeignKey(
+        'orders.Order',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='balance_history'
+    )
+
+    class Meta:
+        verbose_name = "История баланса"
+        verbose_name_plural = "Истории балансов"
 
 
 class GlobalMessage(models.Model):
@@ -184,3 +192,15 @@ class BalanceTopUp(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.amount} - {self.status}"
+
+
+class InfoMessage(models.Model):
+    massage = models.CharField('Инфо сообщение', max_length=500)
+    created_at = models.DateTimeField("Дата создания", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Инфо сообщение"
+        verbose_name_plural = "Инфо сообщения"
+
+    def __str__(self):
+        return f"{self.massage}"

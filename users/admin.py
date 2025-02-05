@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import CustomerUser, UserServiceDiscount, GlobalMessage, BalanceTopUp
+from .models import CustomerUser, UserServiceDiscount, GlobalMessage, BalanceTopUp, InfoMessage
 
 
 @admin.register(CustomerUser)
@@ -75,27 +75,34 @@ class AdminCustomerUser(admin.ModelAdmin):
                                 <tr>
                                     <th style="border: 1px solid black; padding: 5px;">Старый баланс</th>
                                     <th style="border: 1px solid black; padding: 5px;">Новый баланс</th>
-                                    <th style="border: 1px solid black; padding: 5px;">Дата изменения баланса</th>
+                                    <th style="border: 1px solid black; padding: 5px;">Дата изменения</th>
+                                    <th style="border: 1px solid black; padding: 5px;">Связанный заказ</th>
                                 </tr>
                             </thead>
                             <tbody>
                         """
         history_balance = user.balance_history.all()  # type: ignore
 
-        # Если есть записи в истории, то добавляем строки, иначе добавляем пустую строку
+        # Если есть записи в истории, добавляем строки
         if history_balance:
             for item in history_balance:
+                if item.order:
+                    order_link = f"<a href='/admin/orders/order/{item.order.pk}/change/'>{item.order.service_option}</a>"
+                else:
+                    order_link = "Нет связанных заказов"
+
                 table_html += f"""
                         <tr>
                             <td style="border: 1px solid black; padding: 5px;">{item.old_balance}</td>
                             <td style="border: 1px solid black; padding: 5px;">{item.new_balance}</td>
                             <td style="border: 1px solid black; padding: 5px;">{item.create_time}</td>
+                            <td style="border: 1px solid black; padding: 5px;">{order_link}</td>
                         </tr>
                         """
         else:
             table_html += """
                         <tr>
-                            <td colspan="3" style="border: 1px solid black; padding: 5px; text-align: center;">История баланса отсутствует</td>
+                            <td colspan="4" style="border: 1px solid black; padding: 5px; text-align: center;">История баланса отсутствует</td>
                         </tr>
                         """
 
@@ -151,3 +158,4 @@ class GlobalMessageAdmin(admin.ModelAdmin):
     )
 
 admin.site.register(BalanceTopUp)
+admin.site.register(InfoMessage)
