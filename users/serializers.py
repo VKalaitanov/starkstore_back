@@ -69,7 +69,7 @@ class BalanceHistorySerializer(serializers.ModelSerializer):
         if obj.order:
             return {
                 'service': obj.order.service.name,
-                'service_option': obj.order.service_option.name,
+                'service_option': obj.order.service_option.category,
                 'quantity': obj.order.quantity,
                 'total_price': str(obj.order.total_price),
             }
