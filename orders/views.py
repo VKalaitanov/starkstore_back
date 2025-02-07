@@ -29,7 +29,7 @@ class OrderFilter(filters.FilterSet):
 
     class Meta:
         model = Order
-        fields = ["id", "service", "status", "created_at", "completed", "quantity", "total_price"]
+        fields = ["id", "service", "service_option", "status", "created_at", "completed", "quantity", "total_price"]
 
 
 class OrderGetAllView(ListAPIView):
