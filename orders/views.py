@@ -1,11 +1,13 @@
 import logging
+
+import django_filters
 from rest_framework import serializers, status
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import exception_handler, APIView
-
+from django_filters.rest_framework import DjangoFilterBackend
 from services.models import ServiceOption
 from users.models import ReplenishmentBalance
 from .models import Order
@@ -15,14 +17,14 @@ from .serializers import (
     ReplenishmentBalanceCreateSerializer,
     OrderDetailSerializer
 )
-import django_filters
 
 logger = logging.getLogger(__name__)
 
 
 class OrderFilter(django_filters.FilterSet):
     service = django_filters.CharFilter(field_name="service__name", lookup_expr="icontains", label="Сервис")
-    service_option = django_filters.CharFilter(field_name="service_option__name", lookup_expr="icontains", label="Опции сервиса")
+    service_option = django_filters.CharFilter(field_name="service_option__name", lookup_expr="icontains",
+                                               label="Опции сервиса")
     period = django_filters.ChoiceFilter(
         field_name="service_option__period",
         choices=ServiceOption.PeriodChoices.choices,
@@ -34,11 +36,10 @@ class OrderFilter(django_filters.FilterSet):
         fields = ["id", "service", "status", "created_at", "completed", "quantity", "total_price", "period"]
 
 
-
 class OrderGetAllView(ListAPIView):
     serializer_class = OrderGetAllSerializer
     queryset = Order.objects.all()
-    filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]  # Исправленный код
     filterset_class = OrderFilter
     ordering_fields = [
         "id",
@@ -51,12 +52,11 @@ class OrderGetAllView(ListAPIView):
         "created_at",
         "completed",
     ]
-    ordering = ["-created_at"]  # Сортировка по умолчанию
+    ordering = ["-created_at"]
 
     def get_queryset(self):
-        user__pk = self.request.user.pk
-        order = Order.objects.filter(user__pk=user__pk)
-        return order
+        user_pk = self.request.user.pk
+        return Order.objects.filter(user__pk=user_pk)
 
 
 class OrderCreateView(CreateAPIView):
