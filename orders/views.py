@@ -1,4 +1,7 @@
 import logging
+
+from django.db.models import Case, When, Value, IntegerField
+from django_filters import rest_framework as filters
 from rest_framework import serializers, status
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView, CreateAPIView
@@ -6,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import exception_handler, APIView
 
+from services.models import ServiceOption
 from users.models import ReplenishmentBalance
 from .models import Order
 from .serializers import (
@@ -14,7 +18,6 @@ from .serializers import (
     ReplenishmentBalanceCreateSerializer,
     OrderDetailSerializer
 )
-from django_filters import rest_framework as filters
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +34,9 @@ class OrderFilter(filters.FilterSet):
 
 class OrderGetAllView(ListAPIView):
     serializer_class = OrderGetAllSerializer
-    queryset = Order.objects.all()
     filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
     filterset_class = OrderFilter
+    # Добавляем наше аннотированное поле в список полей для сортировки:
     ordering_fields = [
         "id",
         "service__name",
@@ -45,12 +48,23 @@ class OrderGetAllView(ListAPIView):
         "created_at",
         "completed",
     ]
-    ordering = ["-created_at"]  # Сортировка по умолчанию
+    # Сортировка по умолчанию (можно оставить как есть)
+    ordering = ["-created_at"]
 
     def get_queryset(self):
-        user__pk = self.request.user.pk
-        order = Order.objects.filter(user__pk=user__pk)
-        return order
+        user_pk = self.request.user.pk
+        qs = Order.objects.filter(user__pk=user_pk)
+        # Аннотируем queryset полем period_order, где каждому значению period присваивается числовой приоритет:
+        qs = qs.annotate(
+            period=Case(
+                When(service_option__period=ServiceOption.PeriodChoices.HOUR, then=Value(1)),
+                When(service_option__period=ServiceOption.PeriodChoices.DAY, then=Value(2)),
+                When(service_option__period=ServiceOption.PeriodChoices.WEEK, then=Value(3)),
+                When(service_option__period=ServiceOption.PeriodChoices.MONTH, then=Value(4)),
+                output_field=IntegerField()
+            )
+        )
+        return qs
 
 
 class OrderCreateView(CreateAPIView):
