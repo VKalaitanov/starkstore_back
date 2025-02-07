@@ -266,7 +266,7 @@ class PlisioWebhookView(APIView):
             user = top_up.user
             old_balance = user.balance
             user.balance += top_up.amount
-            user.save()  # Отключаем автоматическую запись!
+            user.save(admin_transaction=False)  # Отключаем автоматическую запись!
             try:
             # Записываем в историю
                 BalanceHistory.objects.create(

@@ -17,7 +17,6 @@ class ControlBalance:
             # Проверяем наличие данных
             if not service_option_id:
                 raise serializers.ValidationError({"detail": "Необходимо указать опцию сервиса."})
-
             if not quantity or int(quantity) <= 0:
                 raise serializers.ValidationError({"detail": "Количество должно быть больше 0."})
 
@@ -26,7 +25,6 @@ class ControlBalance:
                 service_option = ServiceOption.objects.get(id=service_option_id)
             except ServiceOption.DoesNotExist:
                 raise serializers.ValidationError({"detail": "Указанная опция сервиса не существует."})
-
             try:
                 service = Service.objects.get(id=service_id)
             except Service.DoesNotExist:
@@ -40,25 +38,20 @@ class ControlBalance:
                 quantity=quantity,
                 custom_data={}
             )
-
             total_price = temp_order.calculate_total_price()
 
-            # Проверяем баланс пользователя
+            # Проверяем, что у пользователя достаточно средств
             if value.balance < total_price:
                 raise serializers.ValidationError({"detail": "У вас недостаточно средств для совершения покупки."})
 
-            # Списываем сумму (если всё успешно)
-            value.balance -= total_price
-            value.save()
-
+            # Здесь можно просто вернуть пользователя, не списывая баланс
             return value
 
         except serializers.ValidationError as e:
-            # Логируем ошибки и возвращаем их пользователю
             logger.error(f"Ошибка валидации: {e.detail}")
             raise
 
         except Exception as e:
-            # Логируем неожиданные ошибки
             logger.error(f"Непредвиденная ошибка: {str(e)}")
             raise serializers.ValidationError({"detail": "Произошла ошибка при проверке баланса."})
+

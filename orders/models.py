@@ -64,14 +64,14 @@ class Order(models.Model):
         # Затем обновляем баланс пользователя
         old_balance = self.user.balance
         self.user.balance -= self.total_price
-        self.user.save(update_fields=["balance"])
+        self.user.save(admin_transaction=False)
 
         # Создаем запись в истории баланса, уже имея ID заказа
         BalanceHistory.objects.create(
             user=self.user,
             old_balance=old_balance,
             new_balance=self.user.balance,
-            order=self,  # Теперь order уже сохранен и его можно связать
+            order=self,
             transaction_type=BalanceHistory.TransactionType.PURCHASE.value
         )
 
