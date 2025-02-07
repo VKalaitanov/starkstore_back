@@ -75,19 +75,22 @@ class CategorySerializer(serializers.Serializer):
 
 
 class PopularServiceOptionSerializer(serializers.ModelSerializer):
-    icon = serializers.SerializerMethodField()
+    icon_url = serializers.SerializerMethodField()
+    icon_svg = serializers.SerializerMethodField()
     service_id = serializers.IntegerField(source='service_option.service.id', read_only=True)
     service_name = serializers.CharField(source='service_option.service.name', read_only=True)
-    category_name = serializers.CharField(source='service_option.category.name', read_only=True)
+    category_name = serializers.CharField(source='service_option.category', read_only=True)
 
     class Meta:
         model = PopularServiceOption
-        fields = ['id', 'service_id', 'service_name', 'category_name', 'icon']
+        fields = ['id', 'service_id', 'service_name', 'category_name', 'icon_url', 'icon_svg']
 
+    def get_icon_url(self, obj):
+        """Возвращает URL изображения, если оно есть."""
+        icon = obj.service_option.service.icon_service
+        return icon.url if icon else None
 
-    def get_icon(self, obj):
-        icon = obj.get_icon()  # Предположительно, это объект типа ImageField или FileField
-        if icon:
-            return icon.url  # Возвращаем URL вместо файла
-        return None  # Если иконки нет, возвращаем None
+    def get_icon_svg(self, obj):
+        """Возвращает SVG-код, если он есть."""
+        return obj.service_option.service.icon_svg
 
