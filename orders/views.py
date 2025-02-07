@@ -40,7 +40,7 @@ class OrderGetAllView(ListAPIView):
     ordering_fields = [
         "id",
         "service__name",
-        "period",
+        "period_order",
         "quantity",
         "service_option__name",
         "status",
@@ -56,7 +56,7 @@ class OrderGetAllView(ListAPIView):
         qs = Order.objects.filter(user__pk=user_pk)
         # Аннотируем queryset полем period_order, где каждому значению period присваивается числовой приоритет:
         qs = qs.annotate(
-            period=Case(
+            period_order=Case(
                 When(service_option__period=ServiceOption.PeriodChoices.HOUR, then=Value(1)),
                 When(service_option__period=ServiceOption.PeriodChoices.DAY, then=Value(2)),
                 When(service_option__period=ServiceOption.PeriodChoices.WEEK, then=Value(3)),
