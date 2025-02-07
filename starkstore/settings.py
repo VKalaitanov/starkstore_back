@@ -72,7 +72,8 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'services.apps.ServicesConfig',
     'data_collector.apps.DataCollectorConfig',
-    'rangefilter'
+    'rangefilter',
+    'django_filters',
 ]
 
 MIDDLEWARE = [

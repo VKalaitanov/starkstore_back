@@ -139,7 +139,7 @@ class PopularServiceOption(models.Model):
         if service.icon_svg:
             return service.icon_svg
         elif service.icon_service:
-            return service.icon_service
+            return service.icon_service.url
         return None
 
     def __str__(self):
