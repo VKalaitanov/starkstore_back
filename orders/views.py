@@ -36,25 +36,23 @@ class OrderGetAllView(ListAPIView):
     serializer_class = OrderGetAllSerializer
     filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
     filterset_class = OrderFilter
-    # Добавляем наше аннотированное поле в список полей для сортировки:
-    ordering_fields = [
-        "id",
-        "service__name",
-        "period_order",
-        "quantity",
-        "service_option__name",
-        "status",
-        "total_price",
-        "created_at",
-        "completed",
-    ]
-    # Сортировка по умолчанию (можно оставить как есть)
+    # Определяем отображение имен для сортировки:
+    ordering_fields = {
+        "id": "id",
+        "service__name": "service__name",
+        "period_order": "period_order",
+        "quantity": "quantity",
+        "service_option": "service_option__name",
+        "status": "status",
+        "total_price": "total_price",
+        "created_at": "created_at",
+        "completed": "completed",
+    }
     ordering = ["-created_at"]
 
     def get_queryset(self):
         user_pk = self.request.user.pk
         qs = Order.objects.filter(user__pk=user_pk)
-        # Аннотируем queryset полем period_order, где каждому значению period присваивается числовой приоритет:
         qs = qs.annotate(
             period_order=Case(
                 When(service_option__period=ServiceOption.PeriodChoices.HOUR, then=Value(1)),
