@@ -15,16 +15,15 @@ from .serializers import (
     ReplenishmentBalanceCreateSerializer,
     OrderDetailSerializer
 )
-from django_filters import rest_framework as filters
+import django_filters
 
 logger = logging.getLogger(__name__)
 
 
-class OrderFilter(filters.FilterSet):
-    service = filters.CharFilter(field_name="service__name", lookup_expr="icontains", label="Сервис")
-    service_option = filters.CharFilter(field_name="service_option__name", lookup_expr="icontains",
-                                        label="Опции сервиса")
-    period = filters.ChoiceFilter(
+class OrderFilter(django_filters.FilterSet):
+    service = django_filters.CharFilter(field_name="service__name", lookup_expr="icontains", label="Сервис")
+    service_option = django_filters.CharFilter(field_name="service_option__name", lookup_expr="icontains", label="Опции сервиса")
+    period = django_filters.ChoiceFilter(
         field_name="service_option__period",
         choices=ServiceOption.PeriodChoices.choices,
         label="Период"
@@ -33,6 +32,7 @@ class OrderFilter(filters.FilterSet):
     class Meta:
         model = Order
         fields = ["id", "service", "status", "created_at", "completed", "quantity", "total_price", "period"]
+
 
 
 class OrderGetAllView(ListAPIView):
