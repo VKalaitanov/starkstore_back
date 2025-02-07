@@ -40,9 +40,9 @@ class OrderGetAllView(ListAPIView):
     ordering_fields = {
         "id": "id",
         "service__name": "service__name",
-        "period": "period_order",
+        "period_order": "period_order",
         "quantity": "quantity",
-        "service_option__name": "service_option__name",
+        "service_option": "service_option__name",
         "status": "status",
         "total_price": "total_price",
         "created_at": "created_at",
