@@ -1,7 +1,7 @@
-from django.contrib import admin
 from .forms import ServiceOptionAdminForm
 from django.utils.safestring import mark_safe
 from .models import Service, ServiceOption, RequiredField, PointsServiceOption, PopularServiceOption
+from django.contrib import admin
 
 
 class ServiceAdmin(admin.ModelAdmin):
@@ -17,7 +17,6 @@ class ServiceAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Service, ServiceAdmin)
-admin.site.register(Service)
 admin.site.register(RequiredField)
 admin.site.register(PointsServiceOption)
 
@@ -37,9 +36,6 @@ class ServiceOptionAdmin(admin.ModelAdmin):
             if 'interval' in fields:
                 fields.remove('interval')
         return fields
-
-
-from django.contrib import admin
 
 
 @admin.register(PopularServiceOption)
