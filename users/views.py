@@ -252,7 +252,7 @@ class PlisioWebhookView(APIView):
         txn_id = data.get('txn_id')
         amount = data.get('amount')
         currency = data.get('currency')
-
+        logger.info(request.data)
         logger.info(f"📨 Webhook данные: Статус - {status_payment}, TXN ID - {txn_id}, Сумма - {amount} {currency}")
         try:
             top_up = BalanceTopUp.objects.get(invoice_id=txn_id)
