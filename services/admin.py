@@ -16,8 +16,8 @@ class ServiceAdmin(admin.ModelAdmin):
 
             return mark_safe(
                 f'''
-                    <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                        <svg width="50" height="50" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" 
+                    <div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <svg width="40" height="40" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" 
                              xmlns="http://www.w3.org/2000/svg">
                             {cleaned_svg}
                         </svg>
@@ -29,7 +29,7 @@ class ServiceAdmin(admin.ModelAdmin):
     def icon_service_preview(self, obj):
         if obj.icon_service:
             return mark_safe(
-                f'<img src="{obj.icon_service.url}" width="50" height="50" style="object-fit: contain;" />')
+                f'<img src="{obj.icon_service.url}" width="40" height="40" style="object-fit: contain;" />')
         return '-'
 
     icon_service_preview.short_description = 'Иконка'
@@ -67,7 +67,7 @@ class PopularServiceOptionAdmin(admin.ModelAdmin):
         """Отображение загруженного изображения (icon_service)"""
         if obj.service_option.service.icon_service:
             return mark_safe(
-                f'<img src="{obj.service_option.service.icon_service.url}" width="50" height="50" style="object-fit: contain;" />'
+                f'<img src="{obj.service_option.service.icon_service.url}" width="40" height="40" style="object-fit: contain;" />'
             )
         return '-'
 
@@ -79,8 +79,8 @@ class PopularServiceOptionAdmin(admin.ModelAdmin):
 
             return mark_safe(
                 f'''
-                    <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                        <svg width="50" height="50" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" 
+                    <div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                        <svg width="40" height="40" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" 
                              xmlns="http://www.w3.org/2000/svg">
                             {cleaned_svg}
                         </svg>
