@@ -170,7 +170,7 @@ class CreateTopUpView(APIView):
         # Проверка email пользователя
         if not user.email:
             logger.error("❌ У пользователя отсутствует email.")
-            return Response({'detail': 'The user does not have email.'},
+            return Response({'detail': 'У пользователя отсутствует email.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         amount = request.data.get('amount')
@@ -178,16 +178,16 @@ class CreateTopUpView(APIView):
             amount = round(float(amount), 2) if amount else None
         except ValueError:
             logger.error("❌ Некорректная сумма пополнения.")
-            return Response({'detail': 'Incorrect replenishment amount.'},
+            return Response({'detail': 'Некорректная сумма пополнения.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         order_number = int(uuid.uuid4())
         logger.info(f"👤 Пользователь: {user.username}, Email: {user.email}")
         logger.info(f"📝 Создание счета в Plisio на сумму {amount} USD")
 
-        if not amount or amount < 10:
-            logger.error("❌ Сумма должна быть не менее 10")
-            return Response({'detail': 'The amount must be at least 10'}, status=status.HTTP_400_BAD_REQUEST)
+        if not amount or amount <= 0:
+            logger.error("❌ Сумма должна быть больше 0.")
+            return Response({'detail': 'Сумма должна быть больше 0'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             invoice = plisio_client.create_invoice(
@@ -202,7 +202,7 @@ class CreateTopUpView(APIView):
             logger.info(f"✅ Счёт успешно создан в Plisio: {invoice}")
         except Exception as e:
             logger.error(f"❌ Ошибка при создании счета в Plisio: {str(e)}")
-            return Response({'detail': 'Error when creating an invoice in Plisio'},
+            return Response({'detail': 'Ошибка при создании счета в Plisio'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         invoice_id = invoice.txn_id
@@ -211,7 +211,7 @@ class CreateTopUpView(APIView):
 
         if not invoice_id:
             logger.error("❌ Не удалось получить ID счета от Plisio.")
-            return Response({'detail': 'Error while retrieving account data'},
+            return Response({'detail': 'Ошибка при получении данных счета'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         top_up = BalanceTopUp.objects.create(
@@ -252,7 +252,7 @@ class PlisioWebhookView(APIView):
         txn_id = data.get('txn_id')
         amount = data.get('amount')
         currency = data.get('currency')
-        logger.info(request.data)
+
         logger.info(f"📨 Webhook данные: Статус - {status_payment}, TXN ID - {txn_id}, Сумма - {amount} {currency}")
         try:
             top_up = BalanceTopUp.objects.get(invoice_id=txn_id)
@@ -260,7 +260,7 @@ class PlisioWebhookView(APIView):
             logger.error(f"❌ Счет с ID {txn_id} не найден.")
             return Response({'detail': 'Счет не найден'}, status=status.HTTP_404_NOT_FOUND)
 
-        if status_payment == 'completed':
+        if status_payment == 'paid':
             top_up.status = 'paid'
             top_up.save()
             user = top_up.user
@@ -268,7 +268,7 @@ class PlisioWebhookView(APIView):
             user.save(admin_transaction=False)
             logger.info(f"✅ Баланс пользователя {user.username} пополнен на {top_up.amount}")
             logger.info("💸 Платёж успешно выполнен.")
-        elif status_payment == 'error':
+        elif status_payment == 'cancelled':
             top_up.status = 'failed'
             top_up.save()
             logger.warning("❌ Платёж был отменён.")
