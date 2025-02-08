@@ -161,13 +161,13 @@ plisio_client = PlisioClient(api_key=settings.PLISIO_API_KEY)
 
 
 class CreateTopUpView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]  # Убедитесь, что IsAuthenticated импортирован
 
     def post(self, request):
         logger.info(f"📥 Получен запрос на пополнение: {request.data}")
         user = request.user
 
-        # Проверка email пользователя
+        # Проверка наличия email у пользователя
         if not user.email:
             logger.error("❌ У пользователя отсутствует email.")
             return Response({'detail': 'The user does not have email.'},
@@ -175,6 +175,7 @@ class CreateTopUpView(APIView):
 
         amount = request.data.get('amount')
         try:
+            # Приводим сумму к float и округляем до 2 знаков после запятой
             amount = round(float(amount), 2) if amount else None
         except ValueError:
             logger.error("❌ Некорректная сумма пополнения.")
@@ -190,14 +191,16 @@ class CreateTopUpView(APIView):
             return Response({'detail': 'The amount must be at least 10'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            # Для создания счёта с конвертацией из фиатной валюты
+            # передаём source_currency и source_amount, НЕ передаём amount
             invoice = plisio_client.create_invoice(
-                amount=amount,
                 currency=CryptoCurrency.USDT_TRX,
                 order_number=order_number,
                 order_name='Top Up Balance',
                 callback_url='https://project-pit.ru/api/v1/user/plisio-webhook/?json=true',
                 email=user.email,
-                source_currency=FiatCurrency.USD
+                source_currency=FiatCurrency.USD,
+                source_amount=amount
             )
             logger.info(f"✅ Счёт успешно создан в Plisio: {invoice}")
         except Exception as e:
@@ -231,8 +234,6 @@ class CreateTopUpView(APIView):
 
 class PlisioWebhookView(APIView):
     def post(self, request, *args, **kwargs):
-        client = PlisioClient(api_key=settings.PLISIO_API_KEY)
-
         if not request.body:
             logger.error("❌ Пустое тело запроса в webhook.")
             return Response({'detail': 'Пустое тело запроса'}, status=status.HTTP_400_BAD_REQUEST)
@@ -241,7 +242,8 @@ class PlisioWebhookView(APIView):
             logger.error(f"❌ Неверный Content-Type: {request.content_type}")
             return Response({'detail': 'Неверный формат данных'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not client.validate_callback(json.dumps(request.data)):
+        # Используем request.body для валидации callback данных
+        if not plisio_client.validate_callback(request.body):
             logger.error("❌ Неверная подпись в webhook.")
             return Response({'detail': 'Неверная подпись'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -252,7 +254,6 @@ class PlisioWebhookView(APIView):
         txn_id = data.get('txn_id')
         amount = data.get('amount')
         currency = data.get('currency')
-        logger.info(request.data)
         logger.info(f"📨 Webhook данные: Статус - {status_payment}, TXN ID - {txn_id}, Сумма - {amount} {currency}")
         try:
             top_up = BalanceTopUp.objects.get(invoice_id=txn_id)

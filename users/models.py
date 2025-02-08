@@ -226,8 +226,8 @@ class BalanceTopUp(models.Model):
     update_time = models.DateTimeField(auto_now=True, verbose_name=_("Время обновления"))
 
     class Meta:
-        verbose_name = _("Пополнение баланса")
-        verbose_name_plural = _("Пополнения баланса")
+        verbose_name = "Пополнение баланса"
+        verbose_name_plural = "Пополнения баланса"
 
     def __str__(self):
         return f"{self.user.email} - {self.amount} - {self.status}"
