@@ -101,7 +101,6 @@ class ServiceOption(models.Model):
         verbose_name_plural = "Настройки сервисов"
 
 
-
 class RequiredField(models.Model):
     title = models.CharField(max_length=100)
 
@@ -133,14 +132,15 @@ class PopularServiceOption(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата добавления")
 
-    def get_icon(self):
-        """Возвращает иконку из модели Service."""
+    def get_icon_service(self):
+        """Возвращает URL изображения, если оно есть"""
         service = self.service_option.service
-        if service.icon_svg:
-            return service.icon_svg
-        elif service.icon_service:
-            return service.icon_service.url
-        return None
+        return service.icon_service.url if service.icon_service else None
+
+    def get_icon_svg(self):
+        """Возвращает SVG-код, если он есть"""
+        service = self.service_option.service
+        return service.icon_svg if service.icon_svg else None
 
     def __str__(self):
         return f"Популярная услуга: {self.service_option}"
