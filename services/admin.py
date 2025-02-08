@@ -10,7 +10,13 @@ class ServiceAdmin(admin.ModelAdmin):
     def icon_svg_preview(self, obj):
         if obj.icon_svg:
             return mark_safe(
-                f'<div style="width:50px; height:50px; overflow:hidden;">{obj.icon_svg}</div>'
+                f'''
+                        <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                            <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                {obj.icon_svg}
+                            </svg>
+                        </div>
+                        '''
             )
         return '-'
 
@@ -46,6 +52,7 @@ class ServiceOptionAdmin(admin.ModelAdmin):
         return fields
 
 
+@admin.register(PopularServiceOption)
 class PopularServiceOptionAdmin(admin.ModelAdmin):
     list_display = ('service_option', 'icon_service_preview', 'icon_svg_preview', 'created_at')
     search_fields = ('service_option__category', 'service_option__service__name')
@@ -62,13 +69,18 @@ class PopularServiceOptionAdmin(admin.ModelAdmin):
         """Отображение SVG-кода"""
         if obj.service_option.service.icon_svg:
             return mark_safe(
-                f'<div style="width:50px; height:50px; overflow:hidden;">{obj.service_option.service.icon_svg}</div>'
+                f'''
+                        <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                            <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                {obj.service_option.service.icon_svg}
+                            </svg>
+                        </div>
+                        '''
             )
         return '-'
 
     icon_service_preview.short_description = 'Иконка (изображение)'
     icon_svg_preview.short_description = 'Иконка (SVG)'
-
 
 
 admin.site.register(ServiceOption, ServiceOptionAdmin)
