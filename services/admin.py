@@ -12,9 +12,12 @@ class ServiceAdmin(admin.ModelAdmin):
             return mark_safe(
                 f'''
                         <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                            <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                                {obj.icon_svg}
-                            </svg>
+                            <div style="width: 100%; height: 100%;">
+                                <svg style="width: 100%; height: 100%; object-fit: contain;" 
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    {obj.icon_svg}
+                                </svg>
+                            </div>
                         </div>
                         '''
             )
@@ -71,9 +74,12 @@ class PopularServiceOptionAdmin(admin.ModelAdmin):
             return mark_safe(
                 f'''
                         <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                            <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                                {obj.service_option.service.icon_svg}
-                            </svg>
+                            <div style="width: 100%; height: 100%;">
+                                <svg style="width: 100%; height: 100%; object-fit: contain;" 
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    {obj.service_option.service.icon_svg}
+                                </svg>
+                            </div>
                         </div>
                         '''
             )
