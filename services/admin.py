@@ -1,3 +1,5 @@
+import re
+
 from .forms import ServiceOptionAdminForm
 from django.utils.safestring import mark_safe
 from .models import Service, ServiceOption, RequiredField, PointsServiceOption, PopularServiceOption
@@ -9,17 +11,18 @@ class ServiceAdmin(admin.ModelAdmin):
 
     def icon_svg_preview(self, obj):
         if obj.icon_svg:
+            svg_code = obj.icon_svg
+            cleaned_svg = re.sub(r'width="\d+px?"|height="\d+px?"', '', svg_code)  # Убираем width и height
+
             return mark_safe(
                 f'''
-                        <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                            <div style="width: 100%; height: 100%;">
-                                <svg style="width: 100%; height: 100%; object-fit: contain;" 
-                                     xmlns="http://www.w3.org/2000/svg">
-                                    {obj.icon_svg}
-                                </svg>
-                            </div>
-                        </div>
-                        '''
+                    <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <svg width="50" height="50" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" 
+                             xmlns="http://www.w3.org/2000/svg">
+                            {cleaned_svg}
+                        </svg>
+                    </div>
+                    '''
             )
         return '-'
 
@@ -71,17 +74,18 @@ class PopularServiceOptionAdmin(admin.ModelAdmin):
     def icon_svg_preview(self, obj):
         """Отображение SVG-кода"""
         if obj.service_option.service.icon_svg:
+            svg_code = obj.service_option.service.icon_svg
+            cleaned_svg = re.sub(r'width="\d+px?"|height="\d+px?"', '', svg_code)  # Убираем width и height
+
             return mark_safe(
                 f'''
-                        <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                            <div style="width: 100%; height: 100%;">
-                                <svg style="width: 100%; height: 100%; object-fit: contain;" 
-                                     xmlns="http://www.w3.org/2000/svg">
-                                    {obj.service_option.service.icon_svg}
-                                </svg>
-                            </div>
-                        </div>
-                        '''
+                    <div style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <svg width="50" height="50" viewBox="0 0 512 512" preserveAspectRatio="xMidYMid meet" 
+                             xmlns="http://www.w3.org/2000/svg">
+                            {cleaned_svg}
+                        </svg>
+                    </div>
+                    '''
             )
         return '-'
 
