@@ -1,9 +1,14 @@
+import logging
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
 
 from services.models import ServiceOption
+
+# Настраиваем логгер для данного модуля (логи на русском)
+logger = logging.getLogger(__name__)
 
 
 class CustomerUserManager(BaseUserManager):
@@ -13,9 +18,13 @@ class CustomerUserManager(BaseUserManager):
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
+        try:
+            user = self.model(email=email, **extra_fields)
+            user.set_password(password)
+            user.save(using=self._db)
+        except Exception as e:
+            logger.error("Ошибка при создании пользователя: %s", e)
+            raise ValueError("Error creating user") from e
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
@@ -46,9 +55,7 @@ class CustomerUser(AbstractUser):
     balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15, serialize=True)
     rating = models.IntegerField(
         'Оценка',
-        # blank=True,
         default=RatingChoice.one,
-        # null=True,
         choices=RatingChoice.choices
     )
     USERNAME_FIELD = 'email'
@@ -56,7 +63,6 @@ class CustomerUser(AbstractUser):
 
     def __str__(self):
         return self.email
-
 
     class Meta:
         verbose_name = "Пользователь"
@@ -68,21 +74,35 @@ class CustomerUser(AbstractUser):
     def save(self, admin_transaction=True, *args, **kwargs):
         # Сохраняем старое значение баланса до сохранения
         if self.pk:
-            old_balance = CustomerUser.objects.get(pk=self.pk).balance
+            try:
+                old_balance = CustomerUser.objects.get(pk=self.pk).balance
+            except CustomerUser.DoesNotExist:
+                old_balance = self.balance
+            except Exception as e:
+                logger.error("Ошибка получения предыдущего баланса для пользователя %s: %s", self.pk, e)
+                old_balance = self.balance
         else:
             old_balance = self.balance
 
-        super().save(*args, **kwargs)
+        try:
+            super().save(*args, **kwargs)
+        except Exception as e:
+            logger.error("Ошибка сохранения пользователя %s: %s", self.email, e)
+            raise Exception("Error saving user") from e
 
         if admin_transaction and old_balance != self.balance:
-            # Определяем тип транзакции (ADMIN_DEPOSIT для админских операций)
-            transaction_type = BalanceHistory.TransactionType.ADMIN_DEPOSIT.value
-            BalanceHistory.objects.create(
-                user=self,
-                old_balance=old_balance,
-                new_balance=self.balance,
-                transaction_type=transaction_type
-            )
+            try:
+                # Определяем тип транзакции (ADMIN_DEPOSIT для админских операций)
+                transaction_type = BalanceHistory.TransactionType.ADMIN_DEPOSIT.value
+                BalanceHistory.objects.create(
+                    user=self,
+                    old_balance=old_balance,
+                    new_balance=self.balance,
+                    transaction_type=transaction_type
+                )
+            except Exception as e:
+                logger.error("Ошибка создания записи истории баланса для пользователя %s: %s", self.email, e)
+                raise Exception("Error creating balance history record") from e
 
 
 class UserServiceDiscount(models.Model):
@@ -149,7 +169,6 @@ class BalanceHistory(models.Model):
     class Meta:
         verbose_name = "История баланса"
         verbose_name_plural = "Истории балансов"
-
 
 
 class GlobalMessage(models.Model):

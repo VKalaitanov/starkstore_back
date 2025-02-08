@@ -163,5 +163,6 @@ class GlobalMessageAdmin(admin.ModelAdmin):
         }),
     )
 
+
 admin.site.register(BalanceTopUp)
 admin.site.register(InfoMessage)

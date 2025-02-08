@@ -19,5 +19,3 @@ def generate_signature():
 
 
     return signature
-
-print(generate_signature())

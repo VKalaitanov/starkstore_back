@@ -1,3 +1,5 @@
+import logging
+
 from djoser.serializers import UserCreatePasswordRetypeSerializer, SetUsernameSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -6,13 +8,15 @@ from rest_framework.serializers import Serializer, CharField
 from .models import CustomerUser, GlobalMessage, BalanceHistory, BalanceTopUp
 from .models import InfoMessage
 
+logger = logging.getLogger(__name__)
+
 
 class ResetPasswordSerializer(Serializer):
     new_password = CharField(write_only=True, min_length=8)
 
     def validate(self, data):
         if 'new_password' not in data:
-            raise ValidationError({'new_password': 'This field is required.'})
+            raise ValidationError({'detail': 'This field is required.'})
         return data
 
 
@@ -22,7 +26,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'email', 'balance'
         ]
-
         read_only_fields = ('id', 'email')
 
 
@@ -42,7 +45,7 @@ class CustomSetUsernameSerializer(SetUsernameSerializer):
     def validate(self, data):
         user = self.context['request'].user
         if data.get('current_email') != user.email:
-            raise serializers.ValidationError("Текущий email не совпадает с email пользователя.")
+            raise serializers.ValidationError("Current email does not match the user's email.")
         return data
 
 
@@ -53,8 +56,12 @@ class GlobalMessageSerializer(serializers.ModelSerializer):
 
     # Добавляем дополнительную логику для обработки данных в POST-запросе
     def update(self, instance, validated_data):
-        instance.is_active = False  # Деактивируем сообщение
-        instance.save()
+        try:
+            instance.is_active = False  # Деактивируем сообщение
+            instance.save()
+        except Exception as e:
+            logger.error("Ошибка при деактивации сообщения: %s", e)
+            raise serializers.ValidationError("An error occurred while deactivating the message.")
         return instance
 
 
@@ -67,13 +74,17 @@ class BalanceHistorySerializer(serializers.ModelSerializer):
         fields = ['old_balance', 'new_balance', 'create_time', 'order_details', 'transaction_type_display']
 
     def get_order_details(self, obj):
-        if obj.order:
-            return {
-                'service': obj.order.service.name,
-                'service_option': obj.order.service_option.category,
-                'quantity': obj.order.quantity,
-            }
-        return None
+        try:
+            if obj.order:
+                return {
+                    'service': obj.order.service.name,
+                    'service_option': obj.order.service_option.category,
+                    'quantity': obj.order.quantity,
+                }
+            return None
+        except Exception as e:
+            logger.error("Ошибка при получении деталей заказа: %s", e)
+            return None
 
 
 class BalanceTopUpSerializer(serializers.ModelSerializer):
