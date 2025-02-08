@@ -9,7 +9,9 @@ class ServiceAdmin(admin.ModelAdmin):
 
     def icon_svg_preview(self, obj):
         if obj.icon_svg:
-            return mark_safe(f'<div style="width:50px; height:50px;">{obj.icon_svg}</div>')
+            return mark_safe(
+                f'<div style="width:50px; height:50px; overflow:hidden;">{obj.icon_svg}</div>'
+            )
         return '-'
 
     def icon_service_preview(self, obj):
@@ -44,27 +46,29 @@ class ServiceOptionAdmin(admin.ModelAdmin):
         return fields
 
 
-@admin.register(PopularServiceOption)
 class PopularServiceOptionAdmin(admin.ModelAdmin):
     list_display = ('service_option', 'icon_service_preview', 'icon_svg_preview', 'created_at')
-    search_fields = ('service_option__service__name', 'service_option__category')
+    search_fields = ('service_option__category', 'service_option__service__name')
 
     def icon_service_preview(self, obj):
-        """Отображает загруженное изображение (icon_service)"""
-        icon = obj.get_icon_service()
-        if icon:
-            return mark_safe(f'<img src="{icon}" width="50" height="50" style="object-fit: contain;" />')
+        """Отображение загруженного изображения (icon_service)"""
+        if obj.service_option.service.icon_service:
+            return mark_safe(
+                f'<img src="{obj.service_option.service.icon_service.url}" width="50" height="50" style="object-fit: contain;" />'
+            )
         return '-'
 
     def icon_svg_preview(self, obj):
-        """Отображает SVG-код (icon_svg)"""
-        icon = obj.get_icon_svg()
-        if icon:
-            return mark_safe(f'<div style="width:50px; height:50px;">{icon}</div>')
+        """Отображение SVG-кода"""
+        if obj.service_option.service.icon_svg:
+            return mark_safe(
+                f'<div style="width:50px; height:50px; overflow:hidden;">{obj.service_option.service.icon_svg}</div>'
+            )
         return '-'
 
     icon_service_preview.short_description = 'Иконка (изображение)'
     icon_svg_preview.short_description = 'Иконка (SVG)'
+
 
 
 admin.site.register(ServiceOption, ServiceOptionAdmin)
