@@ -170,7 +170,7 @@ class CreateTopUpView(APIView):
         # Проверка email пользователя
         if not user.email:
             logger.error("❌ У пользователя отсутствует email.")
-            return Response({'detail': 'The user does not have email.'},
+            return Response({'detail': 'У пользователя отсутствует email.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         amount = request.data.get('amount')
@@ -178,16 +178,16 @@ class CreateTopUpView(APIView):
             amount = round(float(amount), 2) if amount else None
         except ValueError:
             logger.error("❌ Некорректная сумма пополнения.")
-            return Response({'detail': 'Incorrect replenishment amount.'},
+            return Response({'detail': 'Некорректная сумма пополнения.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         order_number = int(uuid.uuid4())
         logger.info(f"👤 Пользователь: {user.username}, Email: {user.email}")
         logger.info(f"📝 Создание счета в Plisio на сумму {amount} USD")
 
-        if not amount or amount < 10:
-            logger.error("❌ Сумма должна быть не менее 10")
-            return Response({'detail': 'The amount must be at least 10'}, status=status.HTTP_400_BAD_REQUEST)
+        if not amount or amount <= 0:
+            logger.error("❌ Сумма должна быть больше 0.")
+            return Response({'detail': 'Сумма должна быть больше 0'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             invoice = plisio_client.create_invoice(
@@ -202,16 +202,16 @@ class CreateTopUpView(APIView):
             logger.info(f"✅ Счёт успешно создан в Plisio: {invoice}")
         except Exception as e:
             logger.error(f"❌ Ошибка при создании счета в Plisio: {str(e)}")
-            return Response({'detail': 'Error when creating an invoice in Plisio'},
+            return Response({'detail': 'Ошибка при создании счета в Plisio'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        invoice_id = order_number
+        invoice_id = invoice.txn_id
         invoice_url = invoice.invoice_url
         invoice_total_sum = invoice.invoice_total_sum
 
         if not invoice_id:
             logger.error("❌ Не удалось получить ID счета от Plisio.")
-            return Response({'detail': 'Error while retrieving account data'},
+            return Response({'detail': 'Ошибка при получении данных счета'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         top_up = BalanceTopUp.objects.create(
@@ -248,9 +248,6 @@ class PlisioWebhookView(APIView):
         logger.info("✅ Подпись webhook подтверждена.")
 
         data = request.data
-        print()
-        logger.info(data)
-        print()
         status_payment = data.get('status')
         txn_id = data.get('txn_id')
         amount = data.get('amount')
@@ -267,18 +264,25 @@ class PlisioWebhookView(APIView):
             top_up.status = 'paid'
             top_up.save()
             user = top_up.user
+            old_balance = user.balance
             user.balance += top_up.amount
             user.save(admin_transaction=False)
-            logger.info(f"✅ Баланс пользователя {user.username} пополнен на {top_up.amount}")
+            logger.info(f"✅ Баланс пользователя {user.email} пополнен на {top_up.amount}")
+            BalanceHistory.objects.create(
+                user=user,
+                old_balance=old_balance,
+                new_balance=user.balance,
+                transaction_type=BalanceHistory.TransactionType.DEPOSIT.value
+            )
             logger.info("💸 Платёж успешно выполнен.")
-        elif status_payment == 'error':
+        elif status_payment == 'cancelled':
             top_up.status = 'failed'
             top_up.save()
             logger.warning("❌ Платёж был отменён.")
         elif status_payment == 'expired':
             top_up.status = 'expired'
             top_up.save()
-            logger.warning("❌ Срок платежа истек.")
+            logger.warning("❌ Истек срок платежа.")
         else:
             top_up.status = 'pending'
             top_up.save()
