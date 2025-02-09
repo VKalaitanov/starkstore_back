@@ -205,7 +205,7 @@ class CreateTopUpView(APIView):
             return Response({'detail': 'Error when creating an invoice in Plisio'},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        invoice_id = invoice.txn_id
+        invoice_id = invoice.order_number
         invoice_url = invoice.invoice_url
         invoice_total_sum = invoice.invoice_total_sum
 
