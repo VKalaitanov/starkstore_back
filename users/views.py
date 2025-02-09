@@ -231,7 +231,7 @@ class CreateTopUpView(APIView):
 
 class PlisioWebhookView(APIView):
     def post(self, request, *args, **kwargs):
-        client = PlisioClient(api_key=settings.PLISIO_API_KEY)
+        # client = PlisioClient(api_key=settings.PLISIO_API_KEY)
 
         if not request.body:
             logger.error("❌ Пустое тело запроса в webhook.")
@@ -241,7 +241,7 @@ class PlisioWebhookView(APIView):
             logger.error(f"❌ Неверный Content-Type: {request.content_type}")
             return Response({'detail': 'Неверный формат данных'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not client.validate_callback(json.dumps(request.data)):
+        if not plisio_client.validate_callback(json.dumps(request.data)):
             logger.error("❌ Неверная подпись в webhook.")
             return Response({'detail': 'Неверная подпись'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -253,10 +253,10 @@ class PlisioWebhookView(APIView):
         print()
         status_payment = data.get('status')
         txn_id = data.get('txn_id')
-        invoice_total_sum = data.get('invoice_total_sum')
+        amount = data.get('amount')
         currency = data.get('currency')
 
-        logger.info(f"📨 Webhook данные: Статус - {status_payment}, TXN ID - {txn_id}, Сумма - {invoice_total_sum} {currency}")
+        logger.info(f"📨 Webhook данные: Статус - {status_payment}, TXN ID - {txn_id}, Сумма - {amount} {currency}")
         try:
             top_up = BalanceTopUp.objects.get(invoice_id=txn_id)
         except BalanceTopUp.DoesNotExist:
