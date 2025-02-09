@@ -249,7 +249,7 @@ class PlisioWebhookView(APIView):
 
         data = request.data
         print()
-        logger.info(data)
+        logger.info(request.body)
         print()
         status_payment = data.get('status')
         txn_id = data.get('txn_id')
