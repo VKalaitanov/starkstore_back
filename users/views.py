@@ -250,10 +250,10 @@ class PlisioWebhookView(APIView):
         data = request.data
         status_payment = data.get('status')
         txn_id = data.get('txn_id')
-        amount = data.get('amount')
+        invoice_total_sum = data.get('invoice_total_sum')
         currency = data.get('currency')
 
-        logger.info(f"📨 Webhook данные: Статус - {status_payment}, TXN ID - {txn_id}, Сумма - {amount} {currency}")
+        logger.info(f"📨 Webhook данные: Статус - {status_payment}, TXN ID - {txn_id}, Сумма - {invoice_total_sum} {currency}")
         try:
             top_up = BalanceTopUp.objects.get(invoice_id=txn_id)
         except BalanceTopUp.DoesNotExist:
