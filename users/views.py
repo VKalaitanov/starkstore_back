@@ -248,6 +248,9 @@ class PlisioWebhookView(APIView):
         logger.info("✅ Подпись webhook подтверждена.")
 
         data = request.data
+        print()
+        logger.info(data)
+        print()
         status_payment = data.get('status')
         txn_id = data.get('txn_id')
         amount = data.get('amount')
