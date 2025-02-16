@@ -3,7 +3,6 @@ from rest_framework import serializers
 from orders.models import Order
 from .models import Service, ServiceOption
 
-# Настройка логгера
 logger = logging.getLogger(__name__)
 
 class ControlBalance:
@@ -16,19 +15,19 @@ class ControlBalance:
 
             # Проверяем наличие данных
             if not service_option_id:
-                raise serializers.ValidationError("Необходимо указать опцию сервиса.")
+                raise serializers.ValidationError("It is necessary to indicate the option of the service.")
             if not quantity or int(quantity) <= 0:
-                raise serializers.ValidationError("Количество должно быть больше 0.")
+                raise serializers.ValidationError("The quantity must be greater than 0.")
 
             # Получаем объекты Service и ServiceOption
             try:
                 service_option = ServiceOption.objects.get(id=service_option_id)
             except ServiceOption.DoesNotExist:
-                raise serializers.ValidationError("Указанная опция сервиса не существует.")
+                raise serializers.ValidationError("The specified option of the service does not exist.")
             try:
                 service = Service.objects.get(id=service_id)
             except Service.DoesNotExist:
-                raise serializers.ValidationError("Указанный сервис не существует.")
+                raise serializers.ValidationError("The specified service does not exist.")
 
             # Создаём временный объект Order для расчёта цены
             temp_order = Order(
@@ -42,7 +41,7 @@ class ControlBalance:
 
             # Проверяем, что у пользователя достаточно средств
             if user.balance < total_price:
-                raise serializers.ValidationError("У вас недостаточно средств для совершения покупки.")
+                raise serializers.ValidationError("You do not have enough money to make a purchase.")
 
             return user
 
@@ -51,5 +50,5 @@ class ControlBalance:
             raise
         except Exception as e:
             logger.error(f"Непредвиденная ошибка: {str(e)}")
-            raise serializers.ValidationError("Произошла ошибка при проверке баланса.")
+            raise serializers.ValidationError("There was an error when checking the balance.")
 
