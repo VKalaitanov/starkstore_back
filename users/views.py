@@ -21,7 +21,7 @@ from rest_framework.views import APIView
 from .models import CustomerUser, InfoMessage
 from .models import GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
 from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, ResetPasswordSerializer, \
-    InfoMessageSerializer, ChangePasswordSerializer
+    InfoMessageSerializer
 
 logger = logging.getLogger(__name__)
 
