@@ -102,7 +102,6 @@ class ActivateUser(APIView):
 class ChangePasswordView(APIView):
     """Endpoint for changing password from profile.
        После успешной смены пароля отправляется уведомление на email."""
-    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
