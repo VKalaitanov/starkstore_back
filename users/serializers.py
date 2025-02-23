@@ -50,22 +50,6 @@ class CustomSetUsernameSerializer(SetUsernameSerializer):
         return data
 
 
-class ChangePasswordSerializer(serializers.Serializer):
-    current_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True, min_length=8)
-
-    # Проверка правильности текущего пароля
-    def validate_current_password(self, value):
-        user = self.context['request'].user
-        if not user.check_password(value):
-            raise serializers.ValidationError("Current password is incorrect.")
-        return value
-
-    def validate_new_password(self, value):
-        password_validation.validate_password(value)
-        return value
-
-
 class GlobalMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = GlobalMessage
