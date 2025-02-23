@@ -3,6 +3,7 @@ import logging
 import uuid
 
 from django.conf import settings
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
@@ -11,16 +12,16 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from plisio import PlisioClient, CryptoCurrency, FiatCurrency
-from rest_framework import generics, permissions
+from rest_framework import generics
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import CustomerUser, InfoMessage
 from .models import GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
 from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, ResetPasswordSerializer, \
-    InfoMessageSerializer
+    InfoMessageSerializer, ChangePasswordSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +37,6 @@ class RequestPasswordResetView(APIView):
             token_generator = PasswordResetTokenGenerator()
             token = token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-            reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
 
             # Используем HTML-шаблон
             subject = "Password Reset Request"
@@ -56,7 +55,7 @@ class RequestPasswordResetView(APIView):
 
 
 class ResetPasswordView(APIView):
-    """Эндпоинт для сброса пароля"""
+    """Эндпоинт для смены пароля"""
     permission_classes = [AllowAny]
 
     def post(self, request, uid, token):
@@ -84,13 +83,13 @@ class ActivateUser(APIView):
 
     def get(self, request, uid, token):
         try:
-            # Декодируем UID пользователя
             user_id = urlsafe_base64_decode(uid).decode()
             user = CustomerUser.objects.get(id=user_id)
-
-            # Проверяем валидность токена
             if default_token_generator.check_token(user, token):
-                # Активируем пользователя
+                # Если есть новый email, обновляем его и очищаем pending_email
+                if user.pending_email:
+                    user.email = user.pending_email
+                    user.pending_email = None
                 user.is_active = True
                 user.save()
                 return Response({'detail': 'The account has been successfully activated.'}, status=status.HTTP_200_OK)
@@ -98,6 +97,32 @@ class ActivateUser(APIView):
                 return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
         except (ObjectDoesNotExist, ValueError, TypeError):
             return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class ChangePasswordView(APIView):
+    """Endpoint for changing password from profile.
+       После успешной смены пароля отправляется уведомление на email."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        new_password = serializer.validated_data['new_password']
+        user.set_password(new_password)
+        user.save()
+        update_session_auth_hash(request, user)  # Обновляем сессию, чтобы не разлогинить пользователя
+
+        subject = "Password Changed Successfully"
+        message = render_to_string('email/password_change_email.html', {
+            'user': user,
+            'new_password': new_password,  # Если необходимо, можно отправить новый пароль
+        })
+        try:
+            send_mail(subject, '', settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
+        except Exception as e:
+            logger.error("Error sending password change email: %s", e)
+        return Response({'detail': 'Password changed successfully.'}, status=status.HTTP_200_OK)
 
 
 class GlobalMessageView(APIView):

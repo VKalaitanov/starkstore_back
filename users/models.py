@@ -51,8 +51,9 @@ class CustomerUser(AbstractUser):
         five = 5, '★★★★★'
 
     username = models.CharField(blank=True, max_length=20)
-    email = models.EmailField(unique=True)
-    balance = MoneyField(decimal_places=2, default=0, default_currency='USD', max_digits=15, serialize=True)
+    email = models.EmailField('Email', unique=True)
+    pending_email = models.EmailField('Новый email', null=True, blank=True)
+    balance = MoneyField('Баланс пользователя', decimal_places=2, default=0, default_currency='USD', max_digits=15, serialize=True)
     rating = models.IntegerField(
         'Оценка',
         default=RatingChoice.one,
