@@ -11,9 +11,9 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from plisio import PlisioClient, CryptoCurrency, FiatCurrency
-from rest_framework import generics
+from rest_framework import generics, permissions
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -37,12 +37,12 @@ class RequestPasswordResetView(APIView):
             token = token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-            domain = settings.FRONTEND_URL
-            activation_url = f'{domain}/{uid}/{token}/'
             # Используем HTML-шаблон
             subject = "Password Reset Request"
             message = render_to_string('email/password_reset_email.html', {
-                'url': activation_url,
+                'domain': settings.FRONTEND_URL,
+                'uid': uid,
+                'token': token,
                 'site_name': 'STARKSTORE',
             })
             # Отправка email
@@ -82,18 +82,18 @@ class ActivateUser(APIView):
 
     def get(self, request, uid, token):
         try:
+            # Декодируем UID пользователя
             user_id = urlsafe_base64_decode(uid).decode()
             user = CustomerUser.objects.get(id=user_id)
-            # Если есть новый email, обновляем его и очищаем pending_email
-            logger.info(user.pending_email)
+
             if user.pending_email:
                 user.email = user.pending_email
                 user.pending_email = ''
                 user.save()
-                logger.info(user.email)
-                return Response({'detail': 'You have successfully changed email.'}, status=status.HTTP_200_OK)
-
+                return Response({'detail': 'You have successfully changed Email.'}, status=status.HTTP_200_OK)
+            # Проверяем валидность токена
             if default_token_generator.check_token(user, token):
+                # Активируем пользователя
                 user.is_active = True
                 user.save()
                 return Response({'detail': 'The account has been successfully activated.'}, status=status.HTTP_200_OK)
@@ -101,7 +101,6 @@ class ActivateUser(APIView):
                 return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
         except (ObjectDoesNotExist, ValueError, TypeError):
             return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
-
 
 
 class GlobalMessageView(APIView):
