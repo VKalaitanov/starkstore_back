@@ -3,7 +3,6 @@ import logging
 import uuid
 
 from django.conf import settings
-from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
@@ -89,7 +88,7 @@ class ActivateUser(APIView):
                 # Если есть новый email, обновляем его и очищаем pending_email
                 if user.pending_email:
                     user.email = user.pending_email
-                    user.pending_email = None
+                    user.pending_email = ''
                 user.is_active = True
                 user.save()
                 return Response({'detail': 'The account has been successfully activated.'}, status=status.HTTP_200_OK)
@@ -97,6 +96,7 @@ class ActivateUser(APIView):
                 return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
         except (ObjectDoesNotExist, ValueError, TypeError):
             return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
 
 
 class GlobalMessageView(APIView):
