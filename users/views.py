@@ -77,7 +77,7 @@ class ResetPasswordView(APIView):
 
 
 class ActivateUser(APIView):
-    """Эндпоинт для активации пользователя"""
+    """Эндпоинт для активации пользователя и обновления email."""
     permission_classes = [AllowAny]
 
     def get(self, request, uid, token):
@@ -89,47 +89,19 @@ class ActivateUser(APIView):
             # Проверяем валидность токена
             if default_token_generator.check_token(user, token):
                 if user.pending_email:
+                    # Обновляем email на pending_email
                     user.email = user.pending_email
-                    user.pending_email = ''
+                    user.pending_email = ''  # Очищаем поле pending_email
+
                 # Активируем пользователя
                 user.is_active = True
                 user.save()
+
                 return Response({'detail': 'The account has been successfully activated.'}, status=status.HTTP_200_OK)
             else:
                 return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
         except (ObjectDoesNotExist, ValueError, TypeError):
             return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-
-class ConfirmEmailChangeView(APIView):
-    """Эндпоинт для подтверждения смены email."""
-
-    def post(self, request):
-        uid = request.data.get('uid')
-        token = request.data.get('token')
-
-        if not uid or not token:
-            return Response({'detail': 'Некорректные данные.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user_id = urlsafe_base64_decode(uid).decode()
-            user = CustomerUser.objects.get(id=user_id)
-
-            if not user.pending_email:
-                return Response({'detail': 'Нет ожидаемого email для смены.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            if not default_token_generator.check_token(user, token):
-                return Response({'detail': 'Неверный или устаревший токен.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Обновляем email
-            user.email = user.pending_email
-            user.pending_email = ''
-            user.save()
-
-            return Response({'detail': 'Email успешно изменен.'}, status=status.HTTP_200_OK)
-
-        except (ObjectDoesNotExist, ValueError, TypeError):
-            return Response({'detail': 'Пользователь не найден.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class GlobalMessageView(APIView):
