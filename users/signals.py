@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 
 @receiver(pre_save, sender=CustomerUser)
 def deactivate_user_on_email_change(sender, instance, **kwargs):
-    if instance.id:  # Если пользователь уже существует
+    # Проверяем, существует ли объект в базе данных
+    if instance.id:  # Если объект имеет id, значит он уже существует
         try:
             old_user = CustomerUser.objects.get(id=instance.id)
         except CustomerUser.DoesNotExist:
@@ -24,14 +25,7 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
 
         if old_user.email != instance.email:  # Email изменился
             logger.info(
-                f"Обнаружено изменение email для пользователя с id {instance.id}. "
-                f"Отправка письма активации на {instance.email}."
-            )
-
-            # Сохраняем новый email в pending_email, а email оставляем старым
-            instance.pending_email = instance.email
-            instance.email = old_user.email  # Возвращаем старый email в основное поле
-
+                f"Обнаружено изменение email для пользователя с id {instance.id}. Отправка письма активации на {instance.email}.")
             try:
                 # Генерация токена активации и id пользователя
                 token = default_token_generator.make_token(instance)
@@ -41,9 +35,11 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
                 domain = settings.DOMAIN
                 url = f'{protocol}://{domain}/activate/{uid}/{token}/'
 
-                subject = f'Confirm your email change on {domain}'
+                subject = f'Account activation on {domain}'
                 message = render_to_string('email/activation.html', {
                     'user': instance,
+                    'protocol': protocol,
+                    'domain': domain,
                     'url': url,
                 })
 
@@ -51,12 +47,11 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
                     subject,
                     message,
                     settings.DEFAULT_FROM_EMAIL,
-                    [instance.pending_email],  # Отправляем письмо на новый email
+                    [instance.email],
                 )
                 email.content_subtype = "html"
                 email.send()
-                logger.info(f"Письмо подтверждения отправлено на {instance.pending_email}.")
+                logger.info(f"Письмо активации успешно отправлено на {instance.email}.")
             except Exception as e:
-                logger.error(f"Ошибка при отправке письма подтверждения email: {e}")
+                logger.error(f"Ошибка при отправке письма активации: {e}")
                 raise Exception("Activation email sending failed") from e
-
