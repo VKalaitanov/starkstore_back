@@ -5,7 +5,6 @@ from django_filters import rest_framework as filters
 from rest_framework import serializers, status
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView, CreateAPIView
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import exception_handler, APIView
 
@@ -68,7 +67,6 @@ class OrderGetAllView(ListAPIView):
 class OrderCreateView(CreateAPIView):
     serializer_class = OrderCreateSerializer
     queryset = Order.objects.all()
-    permission_classes = [IsAuthenticated]
 
     def handle_exception(self, exc):
         response = exception_handler(exc, self.get_renderer_context())
@@ -95,11 +93,9 @@ class OrderCreateView(CreateAPIView):
 class ReplenishmentBalanceCreateView(CreateAPIView):
     serializer_class = ReplenishmentBalanceCreateSerializer
     queryset = ReplenishmentBalance
-    permission_classes = [IsAuthenticated]
 
 
 class OrderDetailView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, id_order):
         try:

@@ -13,7 +13,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from plisio import PlisioClient, CryptoCurrency, FiatCurrency
 from rest_framework import generics, permissions
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class RequestPasswordResetView(APIView):
     """Эндпоинт для запроса сброса пароля """
+    permission_classes = [AllowAny]
 
     def post(self, request):
         email = request.data.get('email')
@@ -56,6 +57,7 @@ class RequestPasswordResetView(APIView):
 
 class ResetPasswordView(APIView):
     """Эндпоинт для сброса пароля"""
+    permission_classes = [AllowAny]
 
     def post(self, request, uid, token):
         serializer = ResetPasswordSerializer(data=request.data)
@@ -77,6 +79,9 @@ class ResetPasswordView(APIView):
 
 
 class ActivateUser(APIView):
+    """Эндпоинт для активации пользователя"""
+    permission_classes = [AllowAny]
+
     def get(self, request, uid, token):
         try:
             # Декодируем UID пользователя
@@ -96,7 +101,6 @@ class ActivateUser(APIView):
 
 
 class GlobalMessageView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         # Получаем активные сообщения, которые пользователь ещё не закрыл
@@ -139,7 +143,6 @@ class GlobalMessageView(APIView):
 
 
 class InfoMessageView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         message = InfoMessage.objects.last()  # Возьмем последнее сообщение
@@ -151,7 +154,6 @@ class InfoMessageView(APIView):
 
 class BalanceHistoryView(generics.ListAPIView):
     serializer_class = BalanceHistorySerializer
-    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return BalanceHistory.objects.filter(user=self.request.user).order_by('-create_time')
@@ -161,7 +163,6 @@ plisio_client = PlisioClient(api_key=settings.PLISIO_API_KEY)
 
 
 class CreateTopUpView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         logger.info(f"📥 Получен запрос на пополнение: {request.data}")
@@ -230,6 +231,8 @@ class CreateTopUpView(APIView):
 
 
 class PlisioWebhookView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request, *args, **kwargs):
         # client = PlisioClient(api_key=settings.PLISIO_API_KEY)
 
