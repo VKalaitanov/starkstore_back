@@ -37,10 +37,13 @@ class RequestPasswordResetView(APIView):
             token = token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
 
+            protocol = 'https'
+            domain = settings.DOMAIN
+            activation_url = f'{protocol}://{domain}/activate/{uid}/{token}/'
             # Используем HTML-шаблон
             subject = "Password Reset Request"
             message = render_to_string('email/password_reset_email.html', {
-                'domain': settings.FRONTEND_URL,
+                'url': activation_url,
                 'uid': uid,
                 'token': token,
                 'site_name': 'STARKSTORE',
