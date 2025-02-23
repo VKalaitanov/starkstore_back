@@ -88,6 +88,9 @@ class ActivateUser(APIView):
 
             # Проверяем валидность токена
             if default_token_generator.check_token(user, token):
+                if user.pending_email:
+                    user.email = user.pending_email
+                    user.pending_email = ''
                 # Активируем пользователя
                 user.is_active = True
                 user.save()
