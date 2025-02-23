@@ -1,6 +1,5 @@
 import logging
 
-from django.contrib.auth import password_validation
 from djoser.serializers import UserCreatePasswordRetypeSerializer, SetUsernameSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError

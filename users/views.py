@@ -68,20 +68,8 @@ class ResetPasswordView(APIView):
             token_generator = PasswordResetTokenGenerator()
 
             if token_generator.check_token(user, token):
-                new_password = serializer.validated_data['new_password']
-                user.set_password(new_password)
+                user.set_password(serializer.validated_data['new_password'])
                 user.save()
-                update_session_auth_hash(request, user)  # Обновляем сессию, чтобы не разлогинить пользователя
-
-                subject = "Password Changed Successfully"
-                message = render_to_string('email/password_change_email.html', {
-                    'user': user.email,
-                    'new_password': new_password,
-                })
-                try:
-                    send_mail(subject, '', settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
-                except Exception as e:
-                    logger.error(f'Ошибка отправки сообщения смены пароля на емаил: {e}')
                 return Response({'detail': 'Password reset successful.'}, status=status.HTTP_200_OK)
             else:
                 return Response({'detail': 'Invalid token or expired link.'}, status=status.HTTP_400_BAD_REQUEST)

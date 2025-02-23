@@ -12,6 +12,7 @@ class AdminCustomerUser(admin.ModelAdmin):
     fields = [
         'rating',
         'email',
+        'pending_email',
         'is_active',
         'balance',
         'order_user',
@@ -23,6 +24,7 @@ class AdminCustomerUser(admin.ModelAdmin):
     save_on_top = True
     readonly_fields = [
         'email',
+        'pending_email',
         'order_user',
         'sum_order',
         'link_for_orders',
