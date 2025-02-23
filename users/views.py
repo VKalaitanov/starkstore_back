@@ -88,6 +88,7 @@ class ActivateUser(APIView):
             if user.pending_email:
                 user.email = user.pending_email
                 user.pending_email = ''
+                user.save()
                 return Response({'detail': 'You have successfully changed email.'}, status=status.HTTP_200_OK)
 
             if default_token_generator.check_token(user, token):
