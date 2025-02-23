@@ -31,7 +31,7 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
                 token = default_token_generator.make_token(instance)
                 uid = urlsafe_base64_encode(str(instance.id).encode())
 
-                protocol = 'http'
+                protocol = 'https'
                 domain = settings.DOMAIN
                 url = f'{protocol}://{domain}/activate/{uid}/{token}/'
 
