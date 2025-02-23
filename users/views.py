@@ -84,11 +84,13 @@ class ActivateUser(APIView):
         try:
             user_id = urlsafe_base64_decode(uid).decode()
             user = CustomerUser.objects.get(id=user_id)
+            # Если есть новый email, обновляем его и очищаем pending_email
+            if user.pending_email:
+                user.email = user.pending_email
+                user.pending_email = ''
+                return Response({'detail': 'You have successfully changed email.'}, status=status.HTTP_200_OK)
+
             if default_token_generator.check_token(user, token):
-                # Если есть новый email, обновляем его и очищаем pending_email
-                if user.pending_email:
-                    user.email = user.pending_email
-                    user.pending_email = ''
                 user.is_active = True
                 user.save()
                 return Response({'detail': 'The account has been successfully activated.'}, status=status.HTTP_200_OK)
