@@ -86,17 +86,14 @@ class ActivateUser(APIView):
             user_id = urlsafe_base64_decode(uid).decode()
             user = CustomerUser.objects.get(id=user_id)
 
-            if user.pending_email:
-                user.email = user.pending_email
-                user.pending_email = ''
-                user.save()
-                return Response({'detail': 'You have successfully changed Email.'}, status=status.HTTP_200_OK)
             # Проверяем валидность токена
             if default_token_generator.check_token(user, token):
-                # Активируем пользователя
-                user.is_active = True
-                user.save()
-                return Response({'detail': 'The account has been successfully activated.'}, status=status.HTTP_200_OK)
+                if user.pending_email:
+                    user.email = user.pending_email  # Меняем email на новый
+                    user.pending_email = ''  # Очищаем pending_email
+                    user.save()
+                    return Response({'detail': 'You have successfully changed Email.'}, status=status.HTTP_200_OK)
+                return Response({'detail': 'No email change request found.'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
         except (ObjectDoesNotExist, ValueError, TypeError):
