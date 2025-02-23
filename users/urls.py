@@ -3,7 +3,6 @@ from . import views
 
 urlpatterns = [
     path('activate/<uid>/<token>/', views.ActivateUser.as_view(), name='activation'),
-    path('confirm-email-change/', views.ConfirmEmailChangeView.as_view(), name='confirm-email-change'),
     path('global-message/', views.GlobalMessageView.as_view(), name='global-message'),
     path('balance-history/', views.BalanceHistoryView.as_view(), name='balance-history'),
     path('info-message/', views.InfoMessageView.as_view(), name='info-message'),

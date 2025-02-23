@@ -1,4 +1,5 @@
 import logging
+
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
@@ -6,9 +7,11 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
+
 from users.models import CustomerUser
 
 logger = logging.getLogger(__name__)
+
 
 @receiver(pre_save, sender=CustomerUser)
 def deactivate_user_on_email_change(sender, instance, **kwargs):
@@ -17,7 +20,7 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
             old_user = CustomerUser.objects.get(id=instance.id)
         except CustomerUser.DoesNotExist:
             logger.error(f"Пользователь с id {instance.id} не найден.")
-            return
+            return  # Если объект не найден, ничего не делаем
 
         if old_user.email != instance.email:  # Email изменился
             logger.info(
@@ -27,7 +30,7 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
 
             # Сохраняем новый email в pending_email, а email оставляем старым
             instance.pending_email = instance.email
-            instance.email = old_user.email
+            instance.email = old_user.email  # Возвращаем старый email в основное поле
 
             try:
                 # Генерация токена активации и id пользователя
@@ -36,19 +39,19 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
 
                 protocol = 'https'
                 domain = settings.DOMAIN
-                confirm_url = f'{protocol}://starkstore.com/change-email/?uid={uid}&token={token}'
+                url = f'{protocol}://{domain}/activate/{uid}/{token}/'
 
                 subject = f'Confirm your email change on {domain}'
-                message = render_to_string('email/confirm_email_change.html', {
+                message = render_to_string('email/activation.html', {
                     'user': instance,
-                    'confirm_url': confirm_url,
+                    'url': url,
                 })
 
                 email = EmailMessage(
                     subject,
                     message,
                     settings.DEFAULT_FROM_EMAIL,
-                    [instance.pending_email],
+                    [instance.pending_email],  # Отправляем письмо на новый email
                 )
                 email.content_subtype = "html"
                 email.send()
@@ -56,3 +59,4 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
             except Exception as e:
                 logger.error(f"Ошибка при отправке письма подтверждения email: {e}")
                 raise Exception("Activation email sending failed") from e
+

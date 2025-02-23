@@ -76,28 +76,6 @@ class ResetPasswordView(APIView):
             return Response({'detail': 'Invalid token or user not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 
-class ConfirmEmailChangeView(APIView):
-    """Подтверждение смены email пользователя"""
-
-    def post(self, request):
-        uid = request.data.get('uid')
-        token = request.data.get('token')
-
-        try:
-            user_id = urlsafe_base64_decode(uid).decode()
-            user = CustomerUser.objects.get(id=user_id)
-
-            if default_token_generator.check_token(user, token) and user.pending_email:
-                user.email = user.pending_email
-                user.pending_email = ''
-                user.save()
-                return Response({'detail': 'Email успешно изменен.'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'detail': 'Неверный токен или отсутствует новый email.'},
-                                status=status.HTTP_400_BAD_REQUEST)
-        except (ObjectDoesNotExist, ValueError, TypeError):
-            return Response({'detail': 'Пользователь не найден.'}, status=status.HTTP_404_NOT_FOUND)
-
 class ActivateUser(APIView):
     """Эндпоинт для активации пользователя"""
     permission_classes = [AllowAny]
