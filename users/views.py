@@ -85,6 +85,11 @@ class ActivateUser(APIView):
             # Декодируем UID пользователя
             user_id = urlsafe_base64_decode(uid).decode()
             user = CustomerUser.objects.get(id=user_id)
+            if user.pending_email:
+                # Обновляем email на pending_email
+                user.email = user.pending_email
+                user.pending_email = ''  # Очищаем поле pending_email
+                user.save()
 
             # Проверяем валидность токена
             if default_token_generator.check_token(user, token):
