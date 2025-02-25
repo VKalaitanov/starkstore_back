@@ -23,7 +23,9 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
             logger.error(f"Пользователь с id {instance.id} не найден.")
             return  # Если объект не найден, ничего не делаем
 
-        if old_user.email != instance.email:  # Email изменился
+        if old_user.email != instance.email:
+            old_user.email = instance.email
+            old_user.save()# Email изменился
             logger.info(
                 f"Обнаружено изменение email для пользователя с id {instance.id}. Отправка письма активации на {instance.email}.")
             try:
