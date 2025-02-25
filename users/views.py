@@ -89,6 +89,7 @@ class ActivateUser(APIView):
                 # Обновляем email на pending_email
                 user.email = user.pending_email
                 user.pending_email = ''  # Очищаем поле pending_email
+                user.is_active = True
                 user.save()
 
             # Проверяем валидность токена
