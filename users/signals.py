@@ -30,7 +30,6 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
                 # Сохраняем новый email в pending_email
                 instance.pending_email = instance.email
                 instance.email = old_user.email  # Возвращаем старый email
-                instance.is_active = False  # Деактивируем пользователя
 
                 # Генерация токена активации и id пользователя
                 token = default_token_generator.make_token(instance)
