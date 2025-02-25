@@ -83,7 +83,7 @@ class ActivateUser(APIView):
     def get(self, request, uid, token):
         try:
             # Декодируем UID пользователя
-            user_id = urlsafe_base64_decode(uid).decode()
+            user_id = force_str(urlsafe_base64_decode(uid))
             user = CustomerUser.objects.get(id=user_id)
 
             # Проверяем валидность токена
@@ -92,14 +92,11 @@ class ActivateUser(APIView):
                     # Обновляем email на pending_email
                     user.email = user.pending_email
                     user.pending_email = ''  # Очищаем поле pending_email
-
-                # Активируем пользователя
-                user.is_active = True
+                user.is_active = True  # Активируем пользователя
                 user.save()
 
                 return Response({'detail': 'The account has been successfully activated.'}, status=status.HTTP_200_OK)
-            else:
-                return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
         except (ObjectDoesNotExist, ValueError, TypeError):
             return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 

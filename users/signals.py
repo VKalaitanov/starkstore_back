@@ -23,17 +23,20 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
             logger.error(f"Пользователь с id {instance.id} не найден.")
             return  # Если объект не найден, ничего не делаем
 
-        if old_user.email != instance.email:
-            old_user.email = instance.email
-            old_user.save()# Email изменился
+        if old_user.email != instance.email:  # Email изменился
             logger.info(
                 f"Обнаружено изменение email для пользователя с id {instance.id}. Отправка письма активации на {instance.email}.")
             try:
+                # Сохраняем новый email в pending_email
+                instance.pending_email = instance.email
+                instance.email = old_user.email  # Возвращаем старый email
+                instance.is_active = False  # Деактивируем пользователя
+
                 # Генерация токена активации и id пользователя
                 token = default_token_generator.make_token(instance)
                 uid = urlsafe_base64_encode(str(instance.id).encode())
 
-                protocol = 'https'
+                protocol = 'https' if getattr(settings, 'USE_HTTPS', False) else 'http'
                 domain = settings.DOMAIN
                 url = f'{protocol}://{domain}/activate/{uid}/{token}/'
 
@@ -49,11 +52,11 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
                     subject,
                     message,
                     settings.DEFAULT_FROM_EMAIL,
-                    [instance.email],
+                    [instance.pending_email],  # Отправляем письмо на новый email
                 )
                 email.content_subtype = "html"
                 email.send()
-                logger.info(f"Письмо активации успешно отправлено на {instance.email}.")
+                logger.info(f"Письмо активации успешно отправлено на {instance.pending_email}.")
             except Exception as e:
                 logger.error(f"Ошибка при отправке письма активации: {e}")
                 raise Exception("Activation email sending failed") from e
