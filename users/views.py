@@ -85,6 +85,9 @@ class ActivateUser(APIView):
             # Декодируем UID пользователя
             user_id = force_str(urlsafe_base64_decode(uid))
             user = CustomerUser.objects.get(id=user_id)
+            logger.info(f"Попытка активации пользователя с id {user_id}.")
+            logger.info(f"Токен валиден: {default_token_generator.check_token(user, token)}")
+            logger.info(f"Pending email: {user.pending_email}")
 
             # Проверяем валидность токена
             if default_token_generator.check_token(user, token):
@@ -93,12 +96,23 @@ class ActivateUser(APIView):
                     user.email = user.pending_email
                     user.pending_email = ''  # Очищаем поле pending_email
                 user.is_active = True  # Активируем пользователя
-                user.save()
+                user.save()  # Сохраняем изменения
 
-                return Response({'detail': 'The account has been successfully activated.'}, status=status.HTTP_200_OK)
-            return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
-        except (ObjectDoesNotExist, ValueError, TypeError):
-            return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {'detail': 'The account has been successfully activated.'},
+                    status=status.HTTP_200_OK
+                )
+
+            return Response(
+                    {'detail': 'Invalid token or expired link.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except (ObjectDoesNotExist, ValueError, TypeError) as e:
+            logger.error(f"Ошибка при активации пользователя: {e}")
+            return Response(
+                {'detail': 'User not found or invalid activation link.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class GlobalMessageView(APIView):
