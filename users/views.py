@@ -95,15 +95,19 @@ class ActivateUser(APIView):
                     # Обновляем email на pending_email
                     user.email = user.pending_email
                     user.pending_email = ''  # Очищаем поле pending_email
-                user.is_active = True  # Активируем пользователя
+                    logger.info(f"Email пользователя {user_id} обновлен на {user.email}.")
+
+                # Активируем пользователя
+                user.is_active = True
                 user.save()  # Сохраняем изменения
+                logger.info(f"Пользователь {user_id} активирован.")
 
                 return Response(
                     {'detail': 'The account has been successfully activated.'},
                     status=status.HTTP_200_OK
                 )
-
-            return Response(
+            else:
+                return Response(
                     {'detail': 'Invalid token or expired link.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
@@ -113,7 +117,6 @@ class ActivateUser(APIView):
                 {'detail': 'User not found or invalid activation link.'},
                 status=status.HTTP_404_NOT_FOUND
             )
-
 
 class GlobalMessageView(APIView):
 
