@@ -14,17 +14,20 @@ logger = logging.getLogger(__name__)
 
 
 @receiver(pre_save, sender=CustomerUser)
-def handle_email_change(sender, instance, **kwargs):
-    if instance.id:  # Существующий пользователь
+def deactivate_user_on_email_change(sender, instance, **kwargs):
+    # Проверяем, существует ли объект в базе данных
+    if instance.id:  # Если объект имеет id, значит он уже существует
         try:
             old_user = CustomerUser.objects.get(id=instance.id)
-            if old_user.email != instance.email and instance.email:  # Проверяем изменение email
-                # Сохраняем новый email в pending_email и деактивируем пользователя
-                instance.pending_email = instance.email
-                instance.email = old_user.email  # Оставляем старый email пока не подтверждено
-                instance.is_active = False
+        except CustomerUser.DoesNotExist:
+            logger.error(f"Пользователь с id {instance.id} не найден.")
+            return  # Если объект не найден, ничего не делаем
 
-                # Генерация токена и отправка письма
+        if old_user.email != instance.email:  # Email изменился
+            logger.info(
+                f"Обнаружено изменение email для пользователя с id {instance.id}. Отправка письма активации на {instance.email}.")
+            try:
+                # Генерация токена активации и id пользователя
                 token = default_token_generator.make_token(instance)
                 uid = urlsafe_base64_encode(str(instance.id).encode())
 
@@ -32,7 +35,7 @@ def handle_email_change(sender, instance, **kwargs):
                 domain = settings.DOMAIN
                 url = f'{protocol}://{domain}/activate/{uid}/{token}/'
 
-                subject = f'Confirm email change on {domain}'
+                subject = f'Account activation on {domain}'
                 message = render_to_string('email/username_reset.html', {
                     'user': instance,
                     'protocol': protocol,
@@ -44,11 +47,11 @@ def handle_email_change(sender, instance, **kwargs):
                     subject,
                     message,
                     settings.DEFAULT_FROM_EMAIL,
-                    [instance.pending_email],
+                    [instance.email],
                 )
                 email.content_subtype = "html"
                 email.send()
-                logger.info(f"Письмо подтверждения отправлено на {instance.pending_email}")
-
-        except CustomerUser.DoesNotExist:
-            logger.error(f"Пользователь с id {instance.id} не найден")
+                logger.info(f"Письмо активации успешно отправлено на {instance.email}.")
+            except Exception as e:
+                logger.error(f"Ошибка при отправке письма активации: {e}")
+                raise Exception("Activation email sending failed") from e

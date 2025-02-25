@@ -81,16 +81,12 @@ class ActivateUser(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, uid, token):
+        logger.info('Активация пользователя')
         try:
             # Декодируем UID пользователя
             user_id = urlsafe_base64_decode(uid).decode()
+            logger.info('-----------', user_id)
             user = CustomerUser.objects.get(id=user_id)
-            if user.pending_email:
-                # Обновляем email на pending_email
-                user.email = user.pending_email
-                user.pending_email = ''  # Очищаем поле pending_email
-                user.is_active = True
-                user.save()
 
             # Проверяем валидность токена
             if default_token_generator.check_token(user, token):
@@ -108,6 +104,7 @@ class ActivateUser(APIView):
                 return Response({'detail': 'Invalid token.'}, status=status.HTTP_400_BAD_REQUEST)
         except (ObjectDoesNotExist, ValueError, TypeError):
             return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
 
 class GlobalMessageView(APIView):
 
