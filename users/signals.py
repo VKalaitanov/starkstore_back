@@ -1,8 +1,10 @@
 import logging
 
 from django.conf import settings
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
+from django.db.models.signals import post_save
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -59,3 +61,42 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
             except Exception as e:
                 logger.error(f"Ошибка при отправке письма активации: {e}")
                 raise Exception("Activation email sending failed") from e
+
+
+logger = logging.getLogger(__name__)
+
+
+@receiver(post_save, sender=CustomerUser)
+def notify_user_on_password_change(sender, instance, **kwargs):
+    """
+    Сигнал, который отправляет уведомление на почту пользователю при изменении пароля.
+    """
+    if instance.id:  # Проверяем, что объект уже существует в базе данных
+        try:
+            old_user = CustomerUser.objects.get(id=instance.id)
+
+            # Проверяем, изменился ли пароль
+            if not check_password(instance.password, old_user.password):
+                logger.info(f"Обнаружено изменение пароля для пользователя с id {instance.id}.")
+
+                # Формируем и отправляем письмо с уведомлением
+                subject = 'Your password has been changed'
+                message = render_to_string('email/password_change_notification.html', {
+                    'user': instance,
+                    'site_name': 'STARKSTORE',
+                })
+
+                email = EmailMessage(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [instance.email],  # Отправляем письмо на email пользователя
+                )
+                email.content_subtype = "html"
+                email.send()
+
+                logger.info(f"Уведомление об изменении пароля отправлено на {instance.email}.")
+        except CustomerUser.DoesNotExist:
+            logger.error(f"Пользователь с id {instance.id} не найден.")
+        except Exception as e:
+            logger.error(f"Ошибка при отправке уведомления об изменении пароля: {e}")
