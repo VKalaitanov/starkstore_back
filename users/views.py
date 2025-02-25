@@ -7,6 +7,8 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
+from django.db import transaction
+from django.db.models.signals import pre_save
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -21,6 +23,7 @@ from .models import CustomerUser, InfoMessage
 from .models import GlobalMessage, UserGlobalMessageStatus, BalanceHistory, BalanceTopUp
 from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, ResetPasswordSerializer, \
     InfoMessageSerializer
+from .signals import deactivate_user_on_email_change
 
 logger = logging.getLogger(__name__)
 
@@ -77,46 +80,50 @@ class ResetPasswordView(APIView):
 
 
 class ActivateUser(APIView):
-    """Эндпоинт для активации пользователя и обновления email."""
     permission_classes = [AllowAny]
 
     def get(self, request, uid, token):
         try:
-            # Декодируем UID пользователя
-            user_id = force_str(urlsafe_base64_decode(uid))
-            user = CustomerUser.objects.get(id=user_id)
-            logger.info(f"Попытка активации пользователя с id {user_id}.")
-            logger.info(f"Токен валиден: {default_token_generator.check_token(user, token)}")
-            logger.info(f"Pending email: {user.pending_email}")
+            with transaction.atomic():
+                # Отключаем сигнал
+                pre_save.disconnect(deactivate_user_on_email_change, sender=CustomerUser)
 
-            # Проверяем валидность токена
-            if default_token_generator.check_token(user, token):
-                if user.pending_email:
-                    # Обновляем email на pending_email
-                    user.email = user.pending_email
-                    user.pending_email = ''  # Очищаем поле pending_email
-                    logger.info(f"Email пользователя {user_id} обновлен на {user.email}.")
+                user_id = force_str(urlsafe_base64_decode(uid))
+                user = CustomerUser.objects.get(id=user_id)
+                logger.info(f"Попытка активации пользователя с id {user_id}.")
+                logger.info(f"Токен валиден: {default_token_generator.check_token(user, token)}")
+                logger.info(f"Pending email: {user.pending_email}")
 
-                # Активируем пользователя
-                user.is_active = True
-                logger.info(
-                    f"До сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
-                user.save()
-                logger.info(
-                    f"После сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
-                logger.info(f"Пользователь {user_id} активирован.")
+                if default_token_generator.check_token(user, token):
+                    if user.pending_email:
+                        logger.info(f"До сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
+                        user.email = user.pending_email
+                        user.pending_email = ''
+                        logger.info(f"Email пользователя {user_id} обновлен на {user.email}.")
 
-                return Response(
-                    {'detail': 'The account has been successfully activated.'},
-                    status=status.HTTP_200_OK
-                )
-            else:
-                return Response(
-                    {'detail': 'Invalid token or expired link.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                    user.is_active = True
+                    user.save()
+                    logger.info(f"После сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
+                    logger.info(f"Пользователь {user_id} активирован.")
+
+                    # Включаем сигнал обратно
+                    pre_save.connect(deactivate_user_on_email_change, sender=CustomerUser)
+
+                    return Response(
+                        {'detail': 'The account has been successfully activated.'},
+                        status=status.HTTP_200_OK
+                    )
+                else:
+                    # Включаем сигнал обратно
+                    pre_save.connect(deactivate_user_on_email_change, sender=CustomerUser)
+                    return Response(
+                        {'detail': 'Invalid token or expired link.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
         except (ObjectDoesNotExist, ValueError, TypeError) as e:
             logger.error(f"Ошибка при активации пользователя: {e}")
+            # Включаем сигнал обратно
+            pre_save.connect(deactivate_user_on_email_change, sender=CustomerUser)
             return Response(
                 {'detail': 'User not found or invalid activation link.'},
                 status=status.HTTP_404_NOT_FOUND
