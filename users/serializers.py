@@ -48,6 +48,10 @@ class CustomSetUsernameSerializer(SetUsernameSerializer):
             raise serializers.ValidationError("Current email does not match the user's email.")
         return data
 
+    def update(self, instance, validated_data):
+        instance.pending_email = validated_data.get('email', instance.pending_email)
+        instance.save()
+        return instance
 
 class GlobalMessageSerializer(serializers.ModelSerializer):
     class Meta:
