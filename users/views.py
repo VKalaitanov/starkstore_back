@@ -81,11 +81,9 @@ class ActivateUser(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, uid, token):
-        logger.info('Активация пользователя')
         try:
             # Декодируем UID пользователя
             user_id = urlsafe_base64_decode(uid).decode()
-            logger.info('-----------', user_id)
             user = CustomerUser.objects.get(id=user_id)
 
             # Проверяем валидность токена
