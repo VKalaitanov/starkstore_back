@@ -28,7 +28,7 @@ def handle_email_change(sender, instance, **kwargs):
                 token = default_token_generator.make_token(instance)
                 uid = urlsafe_base64_encode(str(instance.id).encode())
 
-                protocol = 'https' if settings.USE_HTTPS else 'http'
+                protocol = 'https'
                 domain = settings.DOMAIN
                 url = f'{protocol}://{domain}/activate/{uid}/{token}/'
 
