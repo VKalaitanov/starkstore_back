@@ -99,7 +99,11 @@ class ActivateUser(APIView):
 
                 # Активируем пользователя
                 user.is_active = True
-                user.save()  # Сохраняем изменения
+                logger.info(
+                    f"До сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
+                user.save()
+                logger.info(
+                    f"После сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
                 logger.info(f"Пользователь {user_id} активирован.")
 
                 return Response(
