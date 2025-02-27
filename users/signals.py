@@ -1,5 +1,4 @@
 import logging
-from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
@@ -10,7 +9,6 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
-from django.utils.timezone import now
 
 from users.models import CustomerUser
 
@@ -70,12 +68,13 @@ def notify_user_on_password_change(sender, instance, created, **kwargs):
     """
     Сигнал, который отправляет уведомление на почту пользователю при изменении пароля.
     """
-    if not created and instance.id:  # Проверяем, что объект уже существует в базе данных и не только что создан
+    if instance.id:  # Проверяем, что объект уже существует в базе данных и не только что создан
         try:
             old_user = CustomerUser.objects.get(id=instance.id)
 
             # Проверяем, изменился ли пароль и установлен ли флаг password_changed
-            if instance.password_changed:
+            if not check_password(instance.password, old_user.password) and instance.password_changed:
+                logger.info(f"Обнаружено изменение пароля для пользователя с id {instance.id}.")
 
                 # Формируем и отправляем письмо с уведомлением
                 subject = 'Your password has been changed'
@@ -98,12 +97,6 @@ def notify_user_on_password_change(sender, instance, created, **kwargs):
                 # Сбрасываем флаг после отправки уведомления
                 instance.password_changed = False
                 instance.save(update_fields=['password_changed'])
-                logger.info(
-                    f"Пользователь {instance.id}: created_at={instance.created_at},"
-                    f" password_changed={instance.password_changed}"
-                )
-            else:
-                logger.info(f"Флаг password_changed не установлен для пользователя {instance.id}.")
         except CustomerUser.DoesNotExist:
             logger.error(f"Пользователь с id {instance.id} не найден.")
         except Exception as e:
