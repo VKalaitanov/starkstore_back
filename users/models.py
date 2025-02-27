@@ -59,7 +59,7 @@ class CustomerUser(AbstractUser):
         default=RatingChoice.one,
         choices=RatingChoice.choices
     )
-    # created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     password_changed = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
