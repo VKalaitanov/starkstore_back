@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
@@ -9,6 +10,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
+from django.utils.timezone import now
 
 from users.models import CustomerUser
 
@@ -99,6 +101,10 @@ def notify_user_on_password_change(sender, instance, created, **kwargs):
                     # Сбрасываем флаг после отправки уведомления
                     instance.password_changed = False
                     instance.save(update_fields=['password_changed'])
+                    logger.info(
+                        f"Пользователь {instance.id}: created_at={instance.created_at},"
+                        f" password_changed={instance.password_changed}"
+                    )
                 else:
                     logger.info(f"Пользователь {instance.id} был создан менее 2 минут назад. Уведомление не отправлено.")
             else:
