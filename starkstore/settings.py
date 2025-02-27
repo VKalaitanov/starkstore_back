@@ -19,7 +19,6 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-
 ALLOWED_HOSTS = ['*']
 INTERNAL_IPS = ["127.0.0.1", '77.238.233.222', 'project-pit.ru', 'starkstore.com']
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -205,7 +204,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
@@ -251,7 +249,6 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend'
 ]
 
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = env('EMAIL_HOST')
 EMAIL_PORT = env('EMAIL_PORT')
@@ -277,8 +274,10 @@ DJOSER = {
         'user_create_password_retype': 'users.serializers.CustomUserCreateSerializer',
         'set_username': 'users.serializers.CustomSetUsernameSerializer'
     },
+    'VIEWSET_MAPPING': {
+        'user': 'users.views.CustomUserViewSet'  # Указываем наш кастомный UserViewSet
+    }
 }
-
 
 PLISIO_API_KEY = env('PLISIO_API_KEY')
 PLISIO_API_URL = env('PLISIO_API_URL')

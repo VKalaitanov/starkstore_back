@@ -6,16 +6,18 @@ from django.conf import settings
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import EmailMessage
 from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models.signals import pre_save
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from djoser.views import UserViewSet
 from plisio import PlisioClient, CryptoCurrency, FiatCurrency
-from rest_framework import generics, permissions
+from rest_framework import generics
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -26,6 +28,36 @@ from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, Rese
 from .signals import deactivate_user_on_email_change
 
 logger = logging.getLogger(__name__)
+
+
+class CustomUserViewSet(UserViewSet):
+    def set_password(self, request, *args, **kwargs):
+        """Переопределяем смену пароля, чтобы отправлять уведомление только в этом случае."""
+        response = super().set_password(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_204_NO_CONTENT:
+            user = self.request.user
+
+            logger.info(f"Пароль успешно изменён для {user.email}, отправляем уведомление.")
+
+            subject = 'Your password has been changed'
+            message = render_to_string('email/password_change_notification.html', {
+                'user': user,
+                'site_name': 'STARKSTORE',
+            })
+
+            email = EmailMessage(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+            )
+            email.content_subtype = "html"
+            email.send()
+
+            logger.info(f"Уведомление об изменении пароля отправлено на {user.email}.")
+
+        return response
 
 
 class RequestPasswordResetView(APIView):
@@ -96,14 +128,16 @@ class ActivateUser(APIView):
 
                 if default_token_generator.check_token(user, token):
                     if user.pending_email:
-                        logger.info(f"До сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
+                        logger.info(
+                            f"До сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
                         user.email = user.pending_email
                         user.pending_email = ''
                         logger.info(f"Email пользователя {user_id} обновлен на {user.email}.")
 
                     user.is_active = True
                     user.save()
-                    logger.info(f"После сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
+                    logger.info(
+                        f"После сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
                     logger.info(f"Пользователь {user_id} активирован.")
 
                     # Включаем сигнал обратно
@@ -128,6 +162,7 @@ class ActivateUser(APIView):
                 {'detail': 'User not found or invalid activation link.'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
 
 class GlobalMessageView(APIView):
 
