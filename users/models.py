@@ -2,6 +2,7 @@ import logging
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
 
@@ -59,7 +60,7 @@ class CustomerUser(AbstractUser):
         default=RatingChoice.one,
         choices=RatingChoice.choices
     )
-    created_at = models.DateTimeField(auto_now_add=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True, default=now())
     password_changed = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
