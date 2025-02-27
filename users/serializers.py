@@ -1,6 +1,6 @@
 import logging
 
-from djoser.serializers import UserCreatePasswordRetypeSerializer, SetUsernameSerializer
+from djoser.serializers import UserCreatePasswordRetypeSerializer, SetUsernameSerializer, SetPasswordSerializer
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import Serializer, CharField
@@ -19,6 +19,15 @@ class ResetPasswordSerializer(Serializer):
             raise ValidationError({'detail': 'This field is required.'})
         return data
 
+class CustomSetPasswordSerializer(SetPasswordSerializer):
+    def save(self):
+        # Вызываем родительский метод для смены пароля
+        super().save()
+
+        # Устанавливаем флаг password_changed
+        user = self.context['request'].user
+        user.password_changed = True
+        user.save(update_fields=['password_changed'])
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:

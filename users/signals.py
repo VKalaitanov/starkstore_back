@@ -73,30 +73,36 @@ def notify_user_on_password_change(sender, instance, created, **kwargs):
             old_user = CustomerUser.objects.get(id=instance.id)
 
             # Проверяем, изменился ли пароль и установлен ли флаг password_changed
-            if not check_password(instance.password, old_user.password) and instance.password_changed:
-                logger.info(f"Обнаружено изменение пароля для пользователя с id {instance.id}.")
+            if instance.password_changed:
+                # Проверяем, прошло ли более 2 минут с момента создания пользователя
+                if now() - instance.created_at > timedelta(minutes=2):
+                    logger.info(f"Обнаружено изменение пароля для пользователя с id {instance.id}.")
 
-                # Формируем и отправляем письмо с уведомлением
-                subject = 'Your password has been changed'
-                message = render_to_string('email/password_change_notification.html', {
-                    'user': instance,
-                    'site_name': 'STARKSTORE',
-                })
+                    # Формируем и отправляем письмо с уведомлением
+                    subject = 'Your password has been changed'
+                    message = render_to_string('email/password_change_notification.html', {
+                        'user': instance,
+                        'site_name': 'STARKSTORE',
+                    })
 
-                email = EmailMessage(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [instance.email],  # Отправляем письмо на email пользователя
-                )
-                email.content_subtype = "html"
-                email.send()
+                    email = EmailMessage(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [instance.email],  # Отправляем письмо на email пользователя
+                    )
+                    email.content_subtype = "html"
+                    email.send()
 
-                logger.info(f"Уведомление об изменении пароля отправлено на {instance.email}.")
+                    logger.info(f"Уведомление об изменении пароля отправлено на {instance.email}.")
 
-                # Сбрасываем флаг после отправки уведомления
-                instance.password_changed = False
-                instance.save(update_fields=['password_changed'])
+                    # Сбрасываем флаг после отправки уведомления
+                    instance.password_changed = False
+                    instance.save(update_fields=['password_changed'])
+                else:
+                    logger.info(f"Пользователь {instance.id} был создан менее 2 минут назад. Уведомление не отправлено.")
+            else:
+                logger.info(f"Флаг password_changed не установлен для пользователя {instance.id}.")
         except CustomerUser.DoesNotExist:
             logger.error(f"Пользователь с id {instance.id} не найден.")
         except Exception as e:

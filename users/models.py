@@ -53,6 +53,7 @@ class CustomerUser(AbstractUser):
     username = models.CharField(blank=True, max_length=20)
     email = models.EmailField('Email', unique=True)
     pending_email = models.EmailField('Новый email', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     balance = MoneyField('Баланс пользователя', decimal_places=2, default=0, default_currency='USD', max_digits=15, serialize=True)
     rating = models.IntegerField(
         'Оценка',
