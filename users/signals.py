@@ -68,7 +68,7 @@ def notify_user_on_password_change(sender, instance, created, **kwargs):
     """
     Сигнал, который отправляет уведомление на почту пользователю при изменении пароля.
     """
-    if not created and instance.id:  # Проверяем, что объект уже существует в базе данных и не только что создан
+    if instance.is_active and instance.id:  # Проверяем, что объект уже существует в базе данных и не только что создан
         try:
             old_user = CustomerUser.objects.get(id=instance.id)
 
