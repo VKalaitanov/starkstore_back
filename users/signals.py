@@ -69,9 +69,10 @@ old_passwords = {}
 @receiver(pre_save, sender=CustomerUser)
 def store_old_password(sender, instance, **kwargs):
     """Сохраняем старый пароль пользователя перед его изменением"""
-    if instance.pk:  # Проверяем, что объект уже существует (не новый)
+    if instance.pk:  # Проверяем, что объект уже существует
         try:
-            old_passwords[instance.pk] = CustomerUser.objects.get(pk=instance.pk).password
+            old_user = CustomerUser.objects.get(pk=instance.pk)
+            old_passwords[instance.pk] = old_user.password
         except CustomerUser.DoesNotExist:
             pass  # Пользователь новый, игнорируем
 
@@ -82,7 +83,7 @@ def notify_user_on_password_change(sender, instance, created, **kwargs):
     Отправляет уведомление о смене пароля, если он реально изменился.
     Исключает случаи регистрации и сброса пароля.
     """
-    if created:  # Новый пользователь — пропускаем
+    if created or instance.last_login is None:  # Если новый пользователь или ещё не входил — пропускаем
         return
 
     old_password = old_passwords.pop(instance.pk, None)  # Получаем старый пароль
