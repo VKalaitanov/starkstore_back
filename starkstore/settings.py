@@ -275,8 +275,7 @@ DJOSER = {
     'SERIALIZERS': {
         'current_user': 'users.serializers.ProfileSerializer',
         'user_create_password_retype': 'users.serializers.CustomUserCreateSerializer',
-        'set_username': 'users.serializers.CustomSetUsernameSerializer',
-        'set_password': 'users.serializers.CustomSetPasswordSerializer'
+        'set_username': 'users.serializers.CustomSetUsernameSerializer'
     },
 }
 
