@@ -2,7 +2,6 @@ import logging
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
 
@@ -60,7 +59,6 @@ class CustomerUser(AbstractUser):
         default=RatingChoice.one,
         choices=RatingChoice.choices
     )
-    password_changed = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
