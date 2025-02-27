@@ -11,6 +11,14 @@ from .models import InfoMessage
 logger = logging.getLogger(__name__)
 
 
+class CustomSetPasswordSerializer(SetPasswordSerializer):
+    def save(self, **kwargs):
+        user = self.context['request'].user
+        user.password_changed = True
+        user.save(update_fields=['password_changed'])
+        super().save(**kwargs)
+
+
 class ResetPasswordSerializer(Serializer):
     new_password = CharField(write_only=True, min_length=8)
 
@@ -18,6 +26,7 @@ class ResetPasswordSerializer(Serializer):
         if 'new_password' not in data:
             raise ValidationError({'detail': 'This field is required.'})
         return data
+
 
 class CustomSetPasswordSerializer(SetPasswordSerializer):
     def save(self):
@@ -28,6 +37,7 @@ class CustomSetPasswordSerializer(SetPasswordSerializer):
         user = self.context['request'].user
         user.password_changed = True
         user.save(update_fields=['password_changed'])
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -61,6 +71,7 @@ class CustomSetUsernameSerializer(SetUsernameSerializer):
         instance.pending_email = validated_data.get('email', instance.pending_email)
         instance.save()
         return instance
+
 
 class GlobalMessageSerializer(serializers.ModelSerializer):
     class Meta:

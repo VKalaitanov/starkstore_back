@@ -66,38 +66,39 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
 @receiver(post_save, sender=CustomerUser)
 def notify_user_on_password_change(sender, instance, created, **kwargs):
     """
-    Сигнал, который отправляет уведомление на почту пользователю при изменении пароля.
+    Отправляет уведомление о смене пароля, но не при регистрации или сбросе пароля.
     """
-    if instance.id:  # Проверяем, что объект уже существует в базе данных и не только что создан
-        try:
-            old_user = CustomerUser.objects.get(id=instance.id)
+    if created:  # Если пользователь только создан, выходим
+        return
 
-            # Проверяем, изменился ли пароль и установлен ли флаг password_changed
-            if not check_password(instance.password, old_user.password) and instance.password_changed:
-                logger.info(f"Обнаружено изменение пароля для пользователя с id {instance.id}.")
+    try:
+        old_user = CustomerUser.objects.get(id=instance.id)
+        # Проверяем, действительно ли пароль изменился
+        if instance.password_changed and not check_password(old_user.password, instance.password):
+            logger.info(f"Пароль изменен для пользователя {instance.id}, отправляем уведомление.")
 
-                # Формируем и отправляем письмо с уведомлением
-                subject = 'Your password has been changed'
-                message = render_to_string('email/password_change_notification.html', {
-                    'user': instance,
-                    'site_name': 'STARKSTORE',
-                })
+            subject = 'Your password has been changed'
+            message = render_to_string('email/password_change_notification.html', {
+                'user': instance,
+                'site_name': 'STARKSTORE',
+            })
 
-                email = EmailMessage(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [instance.email],  # Отправляем письмо на email пользователя
-                )
-                email.content_subtype = "html"
-                email.send()
+            email = EmailMessage(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [instance.email],
+            )
+            email.content_subtype = "html"
+            email.send()
 
-                logger.info(f"Уведомление об изменении пароля отправлено на {instance.email}.")
+            logger.info(f"Уведомление об изменении пароля отправлено {instance.email}.")
 
-                # Сбрасываем флаг после отправки уведомления
-                instance.password_changed = False
-                instance.save(update_fields=['password_changed'])
-        except CustomerUser.DoesNotExist:
-            logger.error(f"Пользователь с id {instance.id} не найден.")
-        except Exception as e:
-            logger.error(f"Ошибка при отправке уведомления об изменении пароля: {e}")
+            # Сбрасываем флаг после отправки уведомления
+            instance.password_changed = False
+            instance.save(update_fields=['password_changed'])
+
+    except CustomerUser.DoesNotExist:
+        logger.error(f"Пользователь с id {instance.id} не найден.")
+    except Exception as e:
+        logger.error(f"Ошибка при отправке уведомления об изменении пароля: {e}")
