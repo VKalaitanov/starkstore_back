@@ -63,15 +63,12 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
                 raise Exception("Activation email sending failed") from e
 
 
-logger = logging.getLogger(__name__)
-
-
 @receiver(post_save, sender=CustomerUser)
-def notify_user_on_password_change(sender, instance, **kwargs):
+def notify_user_on_password_change(sender, instance, created, **kwargs):
     """
     Сигнал, который отправляет уведомление на почту пользователю при изменении пароля.
     """
-    if instance.id:  # Проверяем, что объект уже существует в базе данных
+    if not created and instance.id:  # Проверяем, что объект уже существует в базе данных и не только что создан
         try:
             old_user = CustomerUser.objects.get(id=instance.id)
 
