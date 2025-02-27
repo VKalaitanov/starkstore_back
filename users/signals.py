@@ -68,12 +68,12 @@ def notify_user_on_password_change(sender, instance, created, **kwargs):
     """
     Сигнал, который отправляет уведомление на почту пользователю при изменении пароля.
     """
-    if instance.is_active and instance.id:  # Проверяем, что объект уже существует в базе данных и не только что создан
+    if not created and instance.id:  # Проверяем, что объект уже существует в базе данных и не только что создан
         try:
             old_user = CustomerUser.objects.get(id=instance.id)
 
-            # Проверяем, изменился ли пароль
-            if not check_password(instance.password, old_user.password):
+            # Проверяем, изменился ли пароль и установлен ли флаг password_changed
+            if not check_password(instance.password, old_user.password) and instance.password_changed:
                 logger.info(f"Обнаружено изменение пароля для пользователя с id {instance.id}.")
 
                 # Формируем и отправляем письмо с уведомлением
@@ -93,6 +93,10 @@ def notify_user_on_password_change(sender, instance, created, **kwargs):
                 email.send()
 
                 logger.info(f"Уведомление об изменении пароля отправлено на {instance.email}.")
+
+                # Сбрасываем флаг после отправки уведомления
+                instance.password_changed = False
+                instance.save(update_fields=['password_changed'])
         except CustomerUser.DoesNotExist:
             logger.error(f"Пользователь с id {instance.id} не найден.")
         except Exception as e:

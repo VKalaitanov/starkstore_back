@@ -59,6 +59,7 @@ class CustomerUser(AbstractUser):
         default=RatingChoice.one,
         choices=RatingChoice.choices
     )
+    password_changed = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
