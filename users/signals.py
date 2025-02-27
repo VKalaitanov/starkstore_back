@@ -66,14 +66,13 @@ def deactivate_user_on_email_change(sender, instance, **kwargs):
 @receiver(post_save, sender=CustomerUser)
 def notify_user_on_password_change(sender, instance, created, **kwargs):
     """
-    Отправляет уведомление о смене пароля только если пароль был изменен, но не при создании пользователя.
+    Отправляет уведомление о смене пароля, но не при регистрации или сбросе пароля.
     """
-    if created:  # Если пользователь только создан, выходим
+    if created:  # Если пользователь только что создан, выходим
         return
 
     try:
         old_user = CustomerUser.objects.get(id=instance.id)
-
         # Проверяем, действительно ли пароль изменился
         if instance.password_changed and not check_password(instance.password, old_user.password):
             logger.info(f"Пароль изменен для пользователя {instance.id}, отправляем уведомление.")
@@ -103,4 +102,5 @@ def notify_user_on_password_change(sender, instance, created, **kwargs):
         logger.error(f"Пользователь с id {instance.id} не найден.")
     except Exception as e:
         logger.error(f"Ошибка при отправке уведомления об изменении пароля: {e}")
+
 
