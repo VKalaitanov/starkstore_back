@@ -30,18 +30,6 @@ from .signals import deactivate_user_on_email_change
 logger = logging.getLogger(__name__)
 
 
-def redirect_to_store(request):
-    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
-    print(user_agent)
-
-    if "android" in user_agent:
-        return redirect("https://play.google.com/store/apps/details?id=app.demch.digitaldialogueapp")
-    elif re.search(r"iphone|ipad|ipod|macintosh", user_agent):
-        return redirect("https://apps.apple.com/ru/app/мой-цд/id6739049204")
-    else:
-        return redirect("https://www.rustore.ru/catalog/app/app.demch.digitaldialogueapp")
-
-
 class RequestPasswordResetView(APIView):
     """Эндпоинт для запроса сброса пароля """
     permission_classes = [AllowAny]

@@ -10,5 +10,4 @@ urlpatterns = [
     path('plisio-webhook/', views.PlisioWebhookView.as_view(), name='plisio_webhook'),
     path('request-password-reset/', views.RequestPasswordResetView.as_view(), name='request-password-reset'),
     path('reset-password/<str:uid>/<str:token>/', views.ResetPasswordView.as_view(), name='reset-password'),
-    path('mobile-app/', views.redirect_to_store),
 ]
