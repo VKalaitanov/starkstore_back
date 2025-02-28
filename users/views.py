@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import uuid
 
 from django.conf import settings
@@ -9,13 +10,14 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models.signals import pre_save
+from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from plisio import PlisioClient, CryptoCurrency, FiatCurrency
-from rest_framework import generics, permissions
+from rest_framework import generics
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -26,6 +28,18 @@ from .serializers import GlobalMessageSerializer, BalanceHistorySerializer, Rese
 from .signals import deactivate_user_on_email_change
 
 logger = logging.getLogger(__name__)
+
+
+def redirect_to_store(request):
+    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+    print(user_agent)
+
+    if "android" in user_agent:
+        return redirect("https://play.google.com/store/apps/details?id=app.demch.digitaldialogueapp")
+    elif re.search(r"iphone|ipad|ipod|macintosh", user_agent):
+        return redirect("https://apps.apple.com/ru/app/мой-цд/id6739049204")
+    else:
+        return redirect("https://www.rustore.ru/catalog/app/app.demch.digitaldialogueapp")
 
 
 class RequestPasswordResetView(APIView):
@@ -96,14 +110,16 @@ class ActivateUser(APIView):
 
                 if default_token_generator.check_token(user, token):
                     if user.pending_email:
-                        logger.info(f"До сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
+                        logger.info(
+                            f"До сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
                         user.email = user.pending_email
                         user.pending_email = ''
                         logger.info(f"Email пользователя {user_id} обновлен на {user.email}.")
 
                     user.is_active = True
                     user.save()
-                    logger.info(f"После сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
+                    logger.info(
+                        f"После сохранения: email={user.email}, pending_email={user.pending_email}, is_active={user.is_active}")
                     logger.info(f"Пользователь {user_id} активирован.")
 
                     # Включаем сигнал обратно
@@ -128,6 +144,7 @@ class ActivateUser(APIView):
                 {'detail': 'User not found or invalid activation link.'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
 
 class GlobalMessageView(APIView):
 
